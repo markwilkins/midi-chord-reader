@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+build/
+.vscode/launch.json
+.vscode/settings.json
+.vscode/tasks.json
+.DS_Store
