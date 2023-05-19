@@ -18,11 +18,11 @@ TEST_CASE("note storage basics", "storage")
     MidiStore ms;
 
     ms.addNoteEventAtTime(50, 123, true);
-    Array<int> notes = ms.getNotesAtTime(50);
+    Array<int> notes = ms.getNoteOnEventsAtTime(50);
     REQUIRE(notes.size() == 1);
     REQUIRE(notes[0] == 123);
     ms.addNoteEventAtTime(50, 15, true);
-    notes = ms.getNotesAtTime(50);
+    notes = ms.getNoteOnEventsAtTime(50);
     REQUIRE(notes.size() == 2);
     REQUIRE(notes[0] == 15);
     REQUIRE(notes[1] == 123);
@@ -37,7 +37,7 @@ TEST_CASE("note storage basics", "storage")
 TEST_CASE("empty note slot", "storage") 
 {
     MidiStore ms;
-    Array<int> notes = ms.getNotesAtTime(3333);
+    Array<int> notes = ms.getNoteOnEventsAtTime(3333);
     REQUIRE(notes.size() == 0);
 }
 
@@ -47,7 +47,7 @@ TEST_CASE("notes off", "storage")
 
     ms.addNoteEventAtTime(50, 120, false);
     ms.addNoteEventAtTime(50, 127, false);
-    Array<int> notes = ms.getNotesAtTime(50);
+    Array<int> notes = ms.getNoteOnEventsAtTime(50);
     REQUIRE(notes.size() == 0);
 }
 
@@ -59,7 +59,7 @@ TEST_CASE("notes on and off", "storage")
     ms.addNoteEventAtTime(50, 120, false);
     ms.addNoteEventAtTime(50, 123, true);
     ms.addNoteEventAtTime(50, 127, false);
-    Array<int> notes = ms.getNotesAtTime(50);
+    Array<int> notes = ms.getNoteOnEventsAtTime(50);
     REQUIRE(notes.size() == 1);
     REQUIRE(notes[0] == 123);
 }
