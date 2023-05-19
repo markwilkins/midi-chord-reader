@@ -133,6 +133,18 @@ Array<int> MidiStore::getAllNotesOnAtTime(int64 time)
                 break;
             }
             Identifier noteIdent = child.getPropertyName(i);
+            std::string eventStr = noteIdent.toString().toStdString();
+            // If this is not an integer, it is not a note event. Skip it in that case
+            if (eventStr.find_first_not_of("0123456789") != std::string::npos)
+            {
+                DBG("Skipping non-note event");
+                continue;
+            }
+            else 
+            {
+                DBG("Found note event");
+            }
+            
             int note = std::stoi(noteIdent.toString().toStdString());
             bool isOn = child.getProperty(noteIdent);
             if (isOn) 
