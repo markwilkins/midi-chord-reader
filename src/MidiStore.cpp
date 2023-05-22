@@ -199,6 +199,26 @@ std::vector<int> MidiStore::getAllNotesOnAtTime(int64 startTime, int64 endTime)
     return returnVal;
 }
 
+
+/**
+ * @brief Retrieve all times where event changes occur
+ * 
+ * @return std::vector<int64> 
+ */
+std::vector<int64> MidiStore::getEventTimes() {
+    const ScopedLock lock(storeLock);
+    std::vector<int64> eventTimes;
+
+    for (ValueTree::Iterator events = trackData->begin(); events != trackData->end(); ++events)
+    {
+        ValueTree child = *events;
+        int64 eventTime = child.getProperty("eventTime");
+        eventTimes.push_back(eventTime);
+    }
+
+    return eventTimes;
+}
+
 /**
  * @brief Convert a juce string to an integer
  * Could just use the built-in getIntValue, but it returns 0 if not a string with no indicator 

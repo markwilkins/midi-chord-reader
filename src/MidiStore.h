@@ -27,6 +27,7 @@ public:
 
     std::vector<int> getNoteOnEventsAtTime(int64 time);
     std::vector<int> getAllNotesOnAtTime(int64 startTime, int64 endTime);
+    std::vector<int64> getEventTimes();
 
 
 private:

@@ -136,11 +136,7 @@ bool MidiChordsAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 
 void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    int64 posOfBlock = 0;
-    if (auto *playHead = getPlayHead())
-        if (auto position = playHead->getPosition())
-            if (auto samplePos = position->getTimeInSamples())
-                posOfBlock = *samplePos;
+    int64 posOfBlock = currentPlayheadPosition();
 
     for (const auto metadata : midiMessages)
     {
@@ -148,13 +144,14 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         
         int noteNumber = message.getNoteNumber();
         lastNote = message.getMidiNoteName(noteNumber, true, false, 4);
+        auto globalPosOfEvent = message.getTimeStamp() + posOfBlock;
         if (message.isNoteOn())
         {
             currentNotes.insert(lastNote);
-            auto globalPosOfEvent = message.getTimeStamp() + posOfBlock;
             lastEventTime = metadata.samplePosition;
             lastEventTimestamp = globalPosOfEvent; // message.getTimeStamp();
             DBG("Note on: " + message.getDescription() + " at time " + std::to_string(lastEventTime));
+            referenceTrack.addNoteEventAtTime(globalPosOfEvent, noteNumber, true);
         }
         else if (message.isNoteOff()) 
         {
@@ -163,6 +160,7 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
                 currentNotes.erase(pos);
             }
             DBG("Note off: " + message.getDescription());
+            referenceTrack.addNoteEventAtTime(globalPosOfEvent, noteNumber, false);
         }
         else if (message.isMidiClock())
         {
@@ -190,6 +188,24 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     }
     // midiMessages.clear(0, 1000);
 
+}
+
+/**
+ * @brief Retrieve the current playhead position in time
+ * This is from code provided in response to my question about how to find this:
+ * https://forum.juce.com/t/processblock-sampleposition-gettimestamp-interpretation/56172/3?u=tetrachord
+ *
+ * @return int64
+ */
+int64 MidiChordsAudioProcessor::currentPlayheadPosition()
+{
+    int64 currentTime = 0;
+    if (auto *playHead = getPlayHead())
+        if (auto position = playHead->getPosition())
+            if (auto samplePos = position->getTimeInSamples())
+                currentTime = *samplePos;
+
+    return currentTime;
 }
 
 //==============================================================================

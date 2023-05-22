@@ -9,6 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "MidiStore.h"
 
 using std::unordered_set;
 
@@ -34,6 +35,7 @@ public:
    #endif
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;
@@ -63,7 +65,11 @@ public:
     double lastEventTimestamp = 0;
     std::unordered_set<juce::String> currentNotes;
 
+    MidiStore* getReferenceTrack() { return &referenceTrack; }
+
 private:
+    MidiStore referenceTrack;
+    int64 currentPlayheadPosition();
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiChordsAudioProcessor)
 };
