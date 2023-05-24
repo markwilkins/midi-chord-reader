@@ -1,17 +1,22 @@
 
-/*
-*/
 
 #pragma once
 
-// #include <JuceHeader.h>
 #include <juce_core/juce_core.h>
 #include <juce_data_structures/juce_data_structures.h>
-// #include <juce_core/text/juce_Identifier.h>
 using namespace juce;
 
 /**
- * 
+ * This is the "data store" for the midi notes from a track. 
+ * It is constructed as a juce::ValueTree that contains one level of child ValueTree objects
+ * Each child ValueTree contains the midi note events for a given time. 
+ * - The identifier for each child tree is a string of the form "notesat:<int64>" where
+ *   the int value is the event time
+ * - Each child tree has a property with the identifier "eventTime" where the value is the event time
+ * - The child trees are kept in sorted order by event time
+ * - The midi note numbers are stored as properties (in no particular order) in the child tree 
+ *   with the identifier being the midi note number (string version of the int value) and the 
+ *   value as a bool (true/false) representing if it is a note on or off event
  */
 class MidiStore 
 {

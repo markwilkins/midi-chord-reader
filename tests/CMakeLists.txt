@@ -13,6 +13,7 @@ find_package(Catch2 3 REQUIRED)
 #note to self: For next test, just add it to this list
 add_executable(${PROJECT_NAME} 
     midiStoreTest.cpp
+    chordNameTest.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} 

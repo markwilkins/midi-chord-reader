@@ -57,7 +57,6 @@ juce_generate_juce_header(MidiChords)
 include_directories (
         src
         build/_deps/juce-src/modules
-        #build/MidiChords_artefacts/JuceLibraryCode
 )
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the
@@ -69,7 +68,9 @@ target_sources(MidiChords
     PRIVATE
         src/PluginEditor.cpp
         src/PluginProcessor.cpp
-        src/MidiStore.cpp)
+        src/MidiStore.cpp
+        src/ChordName.cpp
+        )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
@@ -111,16 +112,3 @@ target_link_libraries(MidiChords
 
 enable_testing()
 add_subdirectory(tests)  
-#[[
-find_package(Catch2 3 REQUIRED)
-    
-add_executable(demotest tests/010-TestCase.cpp)
-target_link_libraries(demotest PRIVATE Catch2::Catch2WithMain)
-add_executable(midistoretest tests/midiStoreTest.cpp)
-target_link_libraries(midistoretest PRIVATE Catch2::Catch2WithMain)
-
-include(CTest)
-include(Catch)
-catch_discover_tests(demotest)
-catch_discover_tests(midistoretest)
-]]
