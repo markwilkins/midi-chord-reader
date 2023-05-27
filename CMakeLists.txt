@@ -89,7 +89,7 @@ target_compile_definitions(MidiChords
 
 # TODO: I added this to try to make the debugger show strings. Doesn't work for me: https://github.com/vadimcn/codelldb/issues/415
 # If I leave this in, I need to make sure it is only added for debug builds (some kind of IF logic in this file)
-add_compile_options(-fstandalone-debug)
+add_compile_options(-fstandalone-debug -g)
 
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional

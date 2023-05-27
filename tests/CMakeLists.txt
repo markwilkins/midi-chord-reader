@@ -31,7 +31,7 @@ target_compile_definitions(${PROJECT_NAME}
         JUCE_VST3_CAN_REPLACE_VST2=0
         )
 
-add_compile_options(-fstandalone-debug)
+add_compile_options(-fstandalone-debug -g)
 
 
 # juce_generate_juce_header(tests)

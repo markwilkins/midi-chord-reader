@@ -49,7 +49,7 @@ string ChordName::nameChord(vector<int> notes)
     if (notes.size() == 0)
         return "";
 
-    vector<int> normalized = normalizeNotes(notes);
+    vector<int> normalized = reduceNotes(notes);
     
     switch (normalized.size())
     {
@@ -66,67 +66,46 @@ string ChordName::nameChord(vector<int> notes)
 }
 
 
+/**
+ * @brief Create a chord name for a "two note chord".
+ * @details This just uses the notes in the original order. In other words, it assumes that the lowest note
+ * is the chord name. The interval between that note and the next one is treated as the modifier
+ * 
+ * @param vector<int> notes 
+ * @return string 
+ */
 string ChordName::twoNoteChordName(vector<int> notes)
 {
     int interval = notes[1] - notes[0];
     string chord;
+    auto   intervalInfo = twoNoteIntervals.find(interval);
     string modifier = "";
 
-    // Not sure all the intervals even make sense (at least they don't to me in a musical sense)
-    switch (interval) 
-    {
-        case 1: 
-            break;
-        case 2:
-            modifier = "2";
-            break;
-        case 3:
-            modifier = "min";
-            break;
-        case 4:
-            // example is C-E. Just consider it a C
-            break;
-        case 5:
-            modifier = "4";
-            break;
-        case 6:
-            // not even sure what this would be ... C + F# ... not really a chord in my book
-            break;
-        case 7:
-            // Could add a "no 3" to this ... for my own use I don't care about that
-            break;
-        case 8:
-            break;
-        case 9:
-            modifier = "6";
-            break;
-        case 10:
-        case 11:
-            modifier = "7";
-            break;
-    }
+    if (intervalInfo != twoNoteIntervals.end())
+        modifier = intervalInfo->second;
 
     chord = midiNoteToName(notes[0]) + modifier;
     return chord;
 }
 
+
+/**
+ * @brief Name chords that consist of 3 or more notes
+ * 
+ * @param vector<int> notes  The normalized vector of midi note values
+ * @return string 
+ */
 string ChordName::multiNoteChordName(vector<int> notes)
 {
     string chord;
     string modifier = "";
-
-    // if the interval between the bottom (bass-most) note and the next one is 5 or more semitones, then
-    // bump the bottom note up an octave. I think it is more likely to fit into a "normal" chord in that
-    // position. Simple example is CFA: This is the 2nd inversion of an F. The interval from C to F is 5. 
-    // If we bump it to the higher C, then it is a simple Major F chord.
     bool inversion = false;
+    vector<int> notes246;
     int origBass = notes[0];
-    if (notes[1] - notes[0] >= 5)
-    {
-        inversion = true;
-        notes[0] += 12;
-        rotate(notes.begin(), notes.begin() + 1, notes.end());
-    }
+
+    inversion = normalizeNotes(notes);
+    notes246 = extract246(notes);
+
     int interval1 = notes[1] - notes[0];
     int interval2 = notes[2] - notes[1];
     int interval3 = 0;
@@ -151,7 +130,7 @@ string ChordName::multiNoteChordName(vector<int> notes)
 }
 
 /**
- * @brief Put the notes into a "normalized" state to simplify chord quality identification.
+ * @brief Put the notes into a single octave to simplify chord quality identification.
  * - Move the notes into a single octave (the semitone interval between the min and max will be <= 11)
  * - Duplicates are removed (e.g., if there are C2 and C3, the returned vector will only have one C in it)
  * - Preserve the relative position of the bottom-most note (if a C is the lowest note, it will retain that status)
@@ -159,7 +138,7 @@ string ChordName::multiNoteChordName(vector<int> notes)
  * @param notes 
  * @return vector<int>   The notes are returned in sorted MIDI order
  */
-vector<int> ChordName::normalizeNotes(vector<int> notes) 
+vector<int> ChordName::reduceNotes(vector<int> notes) 
 {
     set<int> unique;
     vector<int> normalized;
@@ -186,31 +165,83 @@ vector<int> ChordName::normalizeNotes(vector<int> notes)
 }
 
 
-void ChordName::rotateNotes(vector<int> &notes) 
+/**
+ * @brief This attempts to put a chord into "normalized" form (no inversion)
+ * @details
+ * If the interval between the bottom (lowest) note and the next one is 5 or more semitones, then
+ * bump the bottom note up an octave. I think it is more likely to fit into a "normal" chord in that
+ * position. Simple example is CFA: This is the 2nd inversion of an F. The interval from C to F is 5. 
+ * If we bump it to the higher C, then it is a simple Major F chord.
+ * 
+ * Note - I *think* that the term "normal" when applied to a chord has a specific meaning where it refers
+ * to the set of notes being in their most compact form. This function does not entirely do that. For a
+ * typical 3 note major or minor chord, it will result in that form. But for something like a major 7th
+ * chord (e.g., CEGB), it does not do that. The true "normal" form of that would be EGBC. This method
+ * only does the adjustment (rotation) if there is a semitone gap of 5 notes or more.
+ * 
+ * @param notes  This is modified in place. The lowest (bass) note is NOT preserved
+ * @return  true if the notes are modified, false if no change
+ * 
+ */
+bool ChordName::normalizeNotes(vector<int> &notes) 
 {
-    vector<int>::iterator it;
     int maxGap = 0;
-    int gapPos = 0;
+    vector<int>::difference_type gapPos = 0;
 
-    for (int i = 1; i < notes.size(); i++)
+    for (vector<int>::size_type i = 1; i < notes.size(); i++)
     {
         if (notes[i] - notes[i - 1] > maxGap)
         {
             maxGap = notes[i] - notes[i - 1];
-            gapPos = i;
+            gapPos = static_cast<vector<int>::difference_type>(i);
         }
     }
     if (maxGap >= 5)
     {
         // We found a gap of at least 5 semitones. Add 12 to the notes prior to that
         // gap and rotate them to the end of the vector.
-        transform(notes.begin(), notes.begin() + gapPos - 1, notes.begin(), [&](auto &value)
+        transform(notes.begin(), notes.begin() + gapPos, notes.begin(), [&](auto &value)
                   { return value + 12; });
         rotate(notes.begin(), notes.begin() + gapPos, notes.end());
+        return true;
     }
+    return false;
 }
 
 
+/**
+ * @brief Remove 2nd, 4th, and 6th interval notes from the given vector assuming that the lowest/first
+ * note in the list is the bass note. 
+ * 
+ * @param notes 
+ * @return vector<int>  The removed notes
+ */
+vector<int> ChordName::extract246(vector<int> &notes) 
+{
+    vector<int>::iterator it;
+    vector<int> removed;
+
+    for (it = notes.begin(); it != notes.end();)
+    {
+        int interval = *it - notes[0];
+        if (interval == 2 || interval == 5 || interval == 9)
+        {
+            removed.push_back(*it);
+            it = notes.erase(it);
+        }
+        else
+            ++it;
+    }
+    return removed;
+}
+
+
+/**
+ * @brief Given a MIDI note number, return the note name
+ * 
+ * @param note 
+ * @return string 
+ */
 string ChordName::midiNoteToName(int note)
 {
     note %= 12;
@@ -220,7 +251,7 @@ string ChordName::midiNoteToName(int note)
         pair<int, string> nl = *it;
         return nl.second;
     }
-    return "unkonwn note";
+    return "unknown note";
 }
 
 /*

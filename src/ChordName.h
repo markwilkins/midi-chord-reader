@@ -25,20 +25,18 @@ public:
     ~ChordName();
 
     string nameChord(vector<int> notes);
-
-    string twoNoteChordName(vector<int> notes);
-
-    string multiNoteChordName(vector<int> notes);
-
-    vector<int> normalizeNotes(vector<int> notes);
-
-    void rotateNotes(vector<int> &notes);
-
     string midiNoteToName(int note);
 
-    bool isSharpKey(string key);
+    // These "maybe" should be private methods. But 
+    bool normalizeNotes(vector<int> &notes);
+    vector<int> extract246(vector<int> &notes);
+    vector<int> reduceNotes(vector<int> notes);
 
 private:
+    string twoNoteChordName(vector<int> notes);
+    string multiNoteChordName(vector<int> notes);
+    bool isSharpKey(string key);
+
     // one could have semantic arguments about these, but the F# vs Gb one is probably the main one
     // that seems like it could be argued either way. Going with the flat option for now (gives 6 for each)
     inline static const vector<string> sharpKeys = { "C", "G", "D", "A", "E", "B"};
@@ -48,6 +46,23 @@ private:
     inline static const map<int, chordInfo> chordMap = {
         {0, {true, false}},
         {1, {true, false}}
+    };
+
+    // Define modifiers for "two note" chords.
+    inline static const map<int, string> twoNoteIntervals =
+    {
+        {1, ""},
+        {2, "2"},
+        {3, "min"},
+        {4, ""},
+        {5, "4"},
+        {6, ""},   // not really sure what this would be. C+F# for example. Dunno
+        {7, ""},   // This is a major 5th. Could maybe use "no 3" as the modifier.
+        {8, ""},   // again not sure what this should be. C+G#
+        {9, "6"},
+        {10, "7"},
+        {11, "7"},
+
     };
 
     // Lookup table for chord quality based on intervals between three or four notes

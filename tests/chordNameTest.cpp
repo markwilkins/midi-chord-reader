@@ -142,10 +142,6 @@ TEST_CASE("three note chords", "chordident")
     name = cn.nameChord(notes);
     REQUIRE(name == "C/E");
 
-    // cgab
-    notes = {12, 19, 23, 26};
-    name = cn.nameChord(notes);
-    REQUIRE(name == "G/C");
 }
 
 TEST_CASE("four note chords", "chordident")
@@ -163,4 +159,60 @@ TEST_CASE("four note chords", "chordident")
     notes = {7, 10, 14, 17};
     name = cn.nameChord(notes);
     REQUIRE(name == "Gm7");
+
+    // CGBD
+    notes = {12, 19, 23, 26};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "G/C");
+
+    // CGBbD
+    notes = {12, 19, 22, 26};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "Gmin/C");
+
+    // mlwtbd - need to think about this one. Current code doesn't detect this ... but
+    // it seems like maybe it doesn't have an obvious solution. In fact, I guess I'm not sure
+    // what the actual chord is. It is a simple mess of notes ... is it really a Gm over F?
+    // FGBbD
+    // notes = {17, 19, 22, 26};
+    // name = cn.nameChord(notes);
+    // REQUIRE(name == "Gmin/F");
+}
+
+TEST_CASE("test gap rotation", "chordtransform")
+{
+    ChordName cn;
+    vector<int> notes;
+    vector<int> expected;
+    bool rotated;
+
+    // ceg - should be no change
+    notes = {0, 4, 7};
+    rotated = cn.normalizeNotes(notes);
+    expected = {0, 4, 7};
+    REQUIRE(notes == expected);
+    REQUIRE(rotated == false);
+    // egc
+    notes = {4, 7, 12};
+    rotated = cn.normalizeNotes(notes);
+    // ceg
+    expected = {12, 16, 19};
+    REQUIRE(notes == expected);
+    REQUIRE(rotated == true);
+
+    // gce
+    notes = {7, 12, 16};
+    rotated = cn.normalizeNotes(notes);
+    // ceg
+    expected = {12, 16, 19};
+    REQUIRE(notes == expected);
+    REQUIRE(rotated == true);
+
+    // cfb
+    notes = {0, 5, 11};
+    rotated = cn.normalizeNotes(notes);
+    // bcf
+    expected = {11, 12, 17};
+    REQUIRE(notes == expected);
+    REQUIRE(rotated == true);
 }
