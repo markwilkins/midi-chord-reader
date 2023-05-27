@@ -46,6 +46,9 @@ ChordName::~ChordName()
 
 string ChordName::nameChord(vector<int> notes)
 {
+    if (notes.size() == 0)
+        return "";
+
     vector<int> normalized = normalizeNotes(notes);
     
     switch (normalized.size())
@@ -53,15 +56,10 @@ string ChordName::nameChord(vector<int> notes)
     case 1:
         // for a single note, assume the chord is the one note
         return midiNoteToName(normalized[0]);
-        break;
     case 2:
         return twoNoteChordName(normalized);
-        break;
-    case 3:
-        break;
     default:
-        break;
-
+        return multiNoteChordName(normalized);
     }
 
     return "";
@@ -74,9 +72,11 @@ string ChordName::twoNoteChordName(vector<int> notes)
     string chord;
     string modifier = "";
 
+    // Not sure all the intervals even make sense (at least they don't to me in a musical sense)
     switch (interval) 
     {
-        case 1:
+        case 1: 
+            break;
         case 2:
             modifier = "2";
             break;
@@ -95,6 +95,8 @@ string ChordName::twoNoteChordName(vector<int> notes)
         case 7:
             // Could add a "no 3" to this ... for my own use I don't care about that
             break;
+        case 8:
+            break;
         case 9:
             modifier = "6";
             break;
@@ -108,11 +110,62 @@ string ChordName::twoNoteChordName(vector<int> notes)
     return chord;
 }
 
+string ChordName::multiNoteChordName(vector<int> notes)
+{
+    string chord;
+    string modifier = "";
 
+    // if the interval between the bottom (bass-most) note and the next one is 5 or more semitones, then
+    // bump the bottom note up an octave. I think it is more likely to fit into a "normal" chord in that
+    // position. Simple example is CFA: This is the 2nd inversion of an F. The interval from C to F is 5. 
+    // If we bump it to the higher C, then it is a simple Major F chord.
+    bool inversion = false;
+    int origBass = notes[0];
+    if (notes[1] - notes[0] >= 5)
+    {
+        inversion = true;
+        notes[0] += 12;
+        rotate(notes.begin(), notes.begin() + 1, notes.end());
+    }
+    int interval1 = notes[1] - notes[0];
+    int interval2 = notes[2] - notes[1];
+    int interval3 = 0;
+    if (notes.size() > 3) 
+        interval3 = notes[3] - notes[2];
+
+    tuple<int, int, int> intervalPair = {interval1, interval2, interval3};
+    auto quality = chordQuality.find(intervalPair);
+    if (quality != chordQuality.end()) 
+    {
+        modifier = quality->second;
+    }
+
+    chord = midiNoteToName(notes[0]) + modifier;
+    if (inversion) 
+    {
+        // Treat this as "Chord / Chord" notation. Example is notes CFA (2nd inversion of F maj). Notate it as F/C
+        chord += "/" + midiNoteToName(origBass);
+    }
+
+    return chord;
+}
+
+/**
+ * @brief Put the notes into a "normalized" state to simplify chord quality identification.
+ * - Move the notes into a single octave (the semitone interval between the min and max will be <= 11)
+ * - Duplicates are removed (e.g., if there are C2 and C3, the returned vector will only have one C in it)
+ * - Preserve the relative position of the bottom-most note (if a C is the lowest note, it will retain that status)
+ * 
+ * @param notes 
+ * @return vector<int>   The notes are returned in sorted MIDI order
+ */
 vector<int> ChordName::normalizeNotes(vector<int> notes) 
 {
     set<int> unique;
     vector<int> normalized;
+
+    if (notes.size() == 0) 
+        return notes;
 
     // Use the bottom (most bass) note as a "reference" of sorts. Keep it as the bottom
     // and place the other above it.
@@ -127,8 +180,34 @@ vector<int> ChordName::normalizeNotes(vector<int> notes)
         
         unique.insert(note);
     }
+    // copy them from the set (which will be sorted by its very nature) into the return vector
     normalized.assign(unique.begin(), unique.end());
     return normalized;
+}
+
+
+void ChordName::rotateNotes(vector<int> &notes) 
+{
+    vector<int>::iterator it;
+    int maxGap = 0;
+    int gapPos = 0;
+
+    for (int i = 1; i < notes.size(); i++)
+    {
+        if (notes[i] - notes[i - 1] > maxGap)
+        {
+            maxGap = notes[i] - notes[i - 1];
+            gapPos = i;
+        }
+    }
+    if (maxGap >= 5)
+    {
+        // We found a gap of at least 5 semitones. Add 12 to the notes prior to that
+        // gap and rotate them to the end of the vector.
+        transform(notes.begin(), notes.begin() + gapPos - 1, notes.begin(), [&](auto &value)
+                  { return value + 12; });
+        rotate(notes.begin(), notes.begin() + gapPos, notes.end());
+    }
 }
 
 

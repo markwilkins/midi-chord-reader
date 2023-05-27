@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "ChordName.h"
 #include <iostream>
 #include <sstream>
 using namespace std;
@@ -51,6 +52,7 @@ void MidiChordsAudioProcessorEditor::timerCallback()
         text = text + " " + *it;
     }
     // currentNote.setText(text, juce::NotificationType::sendNotification);
+
     
     juce::String lastTime = std::to_string(audioProcessor.lastEventTime);
     juce::String lastTimestamp = std::to_string((int64)(audioProcessor.lastEventTimestamp));
@@ -60,12 +62,16 @@ void MidiChordsAudioProcessorEditor::timerCallback()
 
     std::string info = "";
     MidiStore *ms = audioProcessor.getReferenceTrack();
+    vector<int> currentNotes = ms->getAllNotesOnAtTime(0, audioProcessor.lastEventTimestamp);
+    ChordName cn;
+    string lastChord = cn.nameChord(currentNotes);
+    currentNote.setText(lastChord, juce::NotificationType::sendNotification);
     std::vector<int64> eventTimes = ms->getEventTimes();
     for (std::vector<int64>::iterator i = eventTimes.begin(); i != eventTimes.end(); ++i) 
     {
         info += std::to_string(*i) + ", ";
     }
-    currentNote.setText(info, juce::NotificationType::sendNotification);
+    // currentNote.setText(info, juce::NotificationType::sendNotification);
 
 
 }

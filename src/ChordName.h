@@ -28,7 +28,11 @@ public:
 
     string twoNoteChordName(vector<int> notes);
 
+    string multiNoteChordName(vector<int> notes);
+
     vector<int> normalizeNotes(vector<int> notes);
+
+    void rotateNotes(vector<int> &notes);
 
     string midiNoteToName(int note);
 
@@ -44,6 +48,24 @@ private:
     inline static const map<int, chordInfo> chordMap = {
         {0, {true, false}},
         {1, {true, false}}
+    };
+
+    // Lookup table for chord quality based on intervals between three or four notes
+    // The zero value indicates there are only 3 notes total
+    inline static const map<tuple<int, int, int>, string> chordQuality = 
+    {
+        {{4, 3, 0}, ""},     // Could include "maj" here ... but I don't want to see "maj" on every one of these
+        {{3, 4, 0}, "min"},
+        {{3, 3, 0}, "dim"},
+        {{4, 4, 0}, "aug"},
+        {{4, 3, 3}, "7"},   // dominant 7th
+        {{4, 3, 4}, "M7"},   // major 7th
+        {{3, 4, 3}, "m7"},   // minor 7th
+        {{3, 3, 4}, "m7b5"},   // half-dimished 7th
+        {{3, 3, 3}, "m7"},   // dimished 7th (for my own use, treating it same as minor 7th)
+        {{4, 4, 3}, "M7+"},   // Augmented 7
+        {{3, 4, 4}, "m-7"},   // minor-major 7
+        
     };
 
     // TODO: still need to determine if F# or Gb

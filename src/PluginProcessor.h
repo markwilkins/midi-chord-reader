@@ -62,7 +62,7 @@ public:
     
     juce::String lastNote;
     int lastEventTime = 0;
-    double lastEventTimestamp = 0;
+    int64 lastEventTimestamp = 0;
     std::unordered_set<juce::String> currentNotes;
 
     MidiStore* getReferenceTrack() { return &referenceTrack; }

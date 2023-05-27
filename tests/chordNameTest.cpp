@@ -40,7 +40,7 @@ TEST_CASE("test note names", "chordident")
 
 }
 
-TEST_CASE("test single note chord", "chordident")
+TEST_CASE("single note chord", "chordident")
 {
     ChordName cn;
     string name;
@@ -58,7 +58,8 @@ TEST_CASE("test single note chord", "chordident")
     REQUIRE(name == "Ab");
 }
 
-TEST_CASE("test two note chords", "chordident")
+
+TEST_CASE("two note chords", "chordident")
 {
     ChordName cn;
     string name;
@@ -74,4 +75,92 @@ TEST_CASE("test two note chords", "chordident")
     name = cn.nameChord(notes);
     REQUIRE(name == "Eb6");
 
+    notes = {26, 12};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "C2");
+
+    notes = {17, 18};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F");
+    notes = {17, 21};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F");
+    notes = {17, 22};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F4");
+    notes = {17, 23};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F");
+    notes = {17, 24};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F");
+    notes = {17, 25};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F");
+    notes = {17, 26};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F6");
+    notes = {17, 27};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F7");
+    notes = {17, 28};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F7");
+
+}
+
+
+TEST_CASE("three note chords", "chordident")
+{
+    ChordName cn;
+    string name;
+    vector<int> notes;
+
+    notes = {0, 4, 7};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "C");
+    notes = {0, 19, 28};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "C");
+    notes = {0, 3, 7};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "Cmin");
+    notes = {8, 11, 14};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "Abdim");
+    notes = {8, 12, 16};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "Abaug");
+
+    // this is 2nd inversion of an F major
+    notes = {0, 5, 9};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "F/C");
+
+    // egc
+    notes = {4, 7, 12};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "C/E");
+
+    // cgab
+    notes = {12, 19, 23, 26};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "G/C");
+}
+
+TEST_CASE("four note chords", "chordident")
+{
+    ChordName cn;
+    string name;
+    vector<int> notes;
+
+    notes = {0, 4, 7, 10};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "C7");
+    notes = {10, 14, 17, 22};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "Bb");
+    notes = {7, 10, 14, 17};
+    name = cn.nameChord(notes);
+    REQUIRE(name == "Gm7");
 }

@@ -84,7 +84,12 @@ target_compile_definitions(MidiChords
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_plugin` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_plugin` call
-        JUCE_VST3_CAN_REPLACE_VST2=0)
+        JUCE_VST3_CAN_REPLACE_VST2=0
+        )
+
+# TODO: I added this to try to make the debugger show strings. Doesn't work for me: https://github.com/vadimcn/codelldb/issues/415
+# If I leave this in, I need to make sure it is only added for debug builds (some kind of IF logic in this file)
+add_compile_options(-fstandalone-debug)
 
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional
