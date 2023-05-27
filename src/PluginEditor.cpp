@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "ChordName.h"
 #include <iostream>
 #include <sstream>
 using namespace std;
@@ -50,14 +51,32 @@ void MidiChordsAudioProcessorEditor::timerCallback()
     for (it = audioProcessor.currentNotes.begin(); it != audioProcessor.currentNotes.end(); it++) {
         text = text + " " + *it;
     }
+    // currentNote.setText(text, juce::NotificationType::sendNotification);
+
     
     juce::String lastTime = std::to_string(audioProcessor.lastEventTime);
-    juce::String lastTimestamp = std::to_string((int64)(audioProcessor.lastEventTimestamp / 1000));
+    juce::String lastTimestamp = std::to_string((int64)(audioProcessor.lastEventTimestamp));
     currentTime.setText("lasttime: " + lastTime, juce::NotificationType::sendNotification);
     currentTimestamp.setText("lts: " + lastTimestamp, juce::NotificationType::sendNotification);
-    currentNote.setText(text, juce::NotificationType::sendNotification);
     repaint();
+
+    std::string info = "";
+    MidiStore *ms = audioProcessor.getReferenceTrack();
+    vector<int> currentNotes = ms->getAllNotesOnAtTime(0, audioProcessor.lastEventTimestamp);
+    ChordName cn;
+    string lastChord = cn.nameChord(currentNotes);
+    currentNote.setText(lastChord, juce::NotificationType::sendNotification);
+    std::vector<int64> eventTimes = ms->getEventTimes();
+    for (std::vector<int64>::iterator i = eventTimes.begin(); i != eventTimes.end(); ++i) 
+    {
+        info += std::to_string(*i) + ", ";
+    }
+    // currentNote.setText(info, juce::NotificationType::sendNotification);
+
+
 }
+
+
 
 //==============================================================================
 void MidiChordsAudioProcessorEditor::paint (juce::Graphics& g)
@@ -75,5 +94,5 @@ void MidiChordsAudioProcessorEditor::resized()
     // sets the position and size of the slider with arguments (x, y, width, height)
     currentTime.setBounds(10, 10, 100, 30);
     currentTimestamp.setBounds(10, 40, 100, 30);
-    currentNote.setBounds(90, 50, 100, 100);
+    currentNote.setBounds(10, 50, getWidth() - 10, 100);
 }

@@ -65,10 +65,6 @@ void MidiStore::addNoteEventAtTime(int64 time, int note, bool isOn)
     // Store the note with the identifier (the label) being the note number and the value being bool on/off
     Identifier noteProp(std::to_string(note));
     child.setProperty(noteProp, isOn, nullptr);
-
-    // Make sure it has the time stored
-    // tbd : need to convert this to an identifier
-    child.setProperty("eventTime", time, nullptr);
 }
 
 /**
@@ -109,6 +105,9 @@ ValueTree MidiStore::ensureNoteEventAtTime(int64 time)
     }
 
     ValueTree newChild(timeProp);
+    // Make sure it has the time stored
+    // tbd : need to convert this to an identifier
+    newChild.setProperty("eventTime", time, nullptr);
     trackData->addChild(newChild, pos, nullptr);
     return newChild;
 }
@@ -197,6 +196,26 @@ std::vector<int> MidiStore::getAllNotesOnAtTime(int64 startTime, int64 endTime)
         returnVal.push_back(notes[i]);
 
     return returnVal;
+}
+
+
+/**
+ * @brief Retrieve all times where event changes occur
+ * 
+ * @return std::vector<int64> 
+ */
+std::vector<int64> MidiStore::getEventTimes() {
+    const ScopedLock lock(storeLock);
+    std::vector<int64> eventTimes;
+
+    for (ValueTree::Iterator events = trackData->begin(); events != trackData->end(); ++events)
+    {
+        ValueTree child = *events;
+        int64 eventTime = child.getProperty("eventTime");
+        eventTimes.push_back(eventTime);
+    }
+
+    return eventTimes;
 }
 
 /**

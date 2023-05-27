@@ -32,6 +32,9 @@
 *.app
 
 build/
+
+Testing/
+
 .vscode/launch.json
 .vscode/settings.json
 .vscode/tasks.json

@@ -105,7 +105,7 @@ TEST_CASE("notes on simple", "storage")
 }
 
 // This is a simple chord sequence that provides a more "end to end" test of the class
-TEST_CASE("notes on random", "storage2")
+TEST_CASE("notes on random", "storage")
 {
     struct event
     {
@@ -162,4 +162,28 @@ TEST_CASE("notes on random", "storage2")
     notes = ms.getAllNotesOnAtTime(50, 50);
     expected = {62};
     REQUIRE(notes == expected);
+}
+
+TEST_CASE("get event times", "storage") 
+{
+    MidiStore ms;
+    std::vector<int64> times;
+    std::vector<int64> expected;
+
+    times = ms.getEventTimes();
+    REQUIRE(times.size() == 0);
+
+    ms.addNoteEventAtTime(25, 1, true);
+    ms.addNoteEventAtTime(25, 2, true);
+    times = ms.getEventTimes();
+    expected = {25};
+    REQUIRE(times == expected);
+
+    ms.addNoteEventAtTime(30, 2, false);
+    ms.addNoteEventAtTime(38, 88, true);
+    ms.addNoteEventAtTime(27, 42, true);
+    times = ms.getEventTimes();
+    expected = {25, 27, 30, 38};
+    REQUIRE(times == expected);
+
 }
