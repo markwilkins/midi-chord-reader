@@ -218,7 +218,7 @@ bool MidiChordsAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* MidiChordsAudioProcessor::createEditor()
 {
-    return new MidiChordsAudioProcessorEditor (*this);
+    return new MidiChordsAudioProcessorEditor (*this, referenceTrack);
 }
 
 //==============================================================================

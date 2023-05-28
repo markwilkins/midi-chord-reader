@@ -16,25 +16,21 @@ using namespace std;
 using std::unordered_set;
 
 //==============================================================================
-MidiChordsAudioProcessorEditor::MidiChordsAudioProcessorEditor (MidiChordsAudioProcessor& p)
-    : AudioProcessorEditor (&p), juce::Timer(), audioProcessor (p)
+MidiChordsAudioProcessorEditor::MidiChordsAudioProcessorEditor (MidiChordsAudioProcessor& p, MidiStore& ms)
+    : AudioProcessorEditor (&p), juce::Timer(), audioProcessor (p), options(ms)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
     setResizable(true, true);
-    setSize (400, 400);
+    setSize (600, 400);
 
 
-    //juce::String noteText = "7:49 the note goes here";
-    //currentNote.setText(noteText, juce::NotificationType::sendNotification);
     currentTime.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
     currentTimestamp.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
     currentNote.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
 
-    // this function adds the slider to the editor
     addAndMakeVisible(&currentTime);
     addAndMakeVisible(&currentTimestamp);
     addAndMakeVisible(&currentNote);
+    addAndMakeVisible(&options);
 
     Timer::startTimer(100);
 }
@@ -65,13 +61,17 @@ void MidiChordsAudioProcessorEditor::timerCallback()
     vector<int> currentNotes = ms->getAllNotesOnAtTime(0, audioProcessor.lastEventTimestamp);
     ChordName cn;
     string lastChord = cn.nameChord(currentNotes);
-    currentNote.setText(lastChord, juce::NotificationType::sendNotification);
+    // currentNote.setText(lastChord, juce::NotificationType::sendNotification);
+    currentTimestamp.setText(lastChord, juce::NotificationType::sendNotification);
     std::vector<int64> eventTimes = ms->getEventTimes();
     for (std::vector<int64>::iterator i = eventTimes.begin(); i != eventTimes.end(); ++i) 
     {
-        info += std::to_string(*i) + ", ";
+        // info += std::to_string(*i) + ", ";
+        vector<int> itNotes = ms->getAllNotesOnAtTime(0, *i);
+        lastChord = cn.nameChord(itNotes);
+        info += lastChord + ", ";
     }
-    // currentNote.setText(info, juce::NotificationType::sendNotification);
+    currentNote.setText(info, juce::NotificationType::sendNotification);
 
 
 }
@@ -95,4 +95,5 @@ void MidiChordsAudioProcessorEditor::resized()
     currentTime.setBounds(10, 10, 100, 30);
     currentTimestamp.setBounds(10, 40, 100, 30);
     currentNote.setBounds(10, 50, getWidth() - 10, 100);
+    options.setBounds(0, getHeight() - 100, getWidth(), 100);
 }

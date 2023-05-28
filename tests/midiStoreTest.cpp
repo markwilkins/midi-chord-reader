@@ -2,6 +2,7 @@
 #include "MidiStore.h"
 #include <algorithm>
 #include <random>
+using namespace std;
 
 TEST_CASE("midi store basics")
 {
@@ -33,9 +34,33 @@ TEST_CASE("note storage basics", "storage")
 
     // adding duplicate note should not add a new one
     ms.addNoteEventAtTime(50, 15, true);
+    notes = ms.getNoteOnEventsAtTime(50);
     REQUIRE(notes.size() == 2);
     REQUIRE(notes[0] == 15);
     REQUIRE(notes[1] == 123);
+
+    ms.clear();
+    notes = ms.getNoteOnEventsAtTime(50);
+    REQUIRE(notes.size() == 0);
+
+}
+
+TEST_CASE("test state change flag", "storage")
+{
+    MidiStore ms;
+    vector<int> notes;
+    vector<int> expected;
+
+    // verify that the state change flag is obeyed
+    ms.allowStateChange(false);
+    ms.addNoteEventAtTime(50, 15, true);
+    notes = ms.getAllNotesOnAtTime(0, 200);
+    REQUIRE(notes.size() == 0);
+    ms.allowStateChange(true);
+    ms.addNoteEventAtTime(50, 15, true);
+    notes = ms.getAllNotesOnAtTime(0, 200);
+    REQUIRE(notes.size() == 1);
+
 }
 
 TEST_CASE("empty note slot", "storage")
@@ -184,6 +209,14 @@ TEST_CASE("get event times", "storage")
     ms.addNoteEventAtTime(27, 42, true);
     times = ms.getEventTimes();
     expected = {25, 27, 30, 38};
+    REQUIRE(times == expected);
+
+    ms.clear();
+    times = ms.getEventTimes();
+    REQUIRE(times.size() == 0);
+    ms.addNoteEventAtTime(57, 42, true);
+    times = ms.getEventTimes();
+    expected = {57};
     REQUIRE(times == expected);
 
 }

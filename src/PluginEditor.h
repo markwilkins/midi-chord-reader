@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "OptionsComponent.h"
 
 //==============================================================================
 /**
@@ -18,7 +19,7 @@ class MidiChordsAudioProcessorEditor  : public juce::AudioProcessorEditor,
                                             public juce::Timer
 {
 public:
-    MidiChordsAudioProcessorEditor (MidiChordsAudioProcessor&);
+    MidiChordsAudioProcessorEditor (MidiChordsAudioProcessor&, MidiStore&);
     ~MidiChordsAudioProcessorEditor() override;
 
     //==============================================================================
@@ -35,6 +36,7 @@ private:
     juce::Label currentNote;
     juce::Label currentTime;
     juce::Label currentTimestamp;
+    OptionsComponent options;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiChordsAudioProcessorEditor)
 };

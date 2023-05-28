@@ -68,6 +68,7 @@ target_sources(MidiChords
     PRIVATE
         src/PluginEditor.cpp
         src/PluginProcessor.cpp
+        src/OptionsComponent.cpp
         src/MidiStore.cpp
         src/ChordName.cpp
         )

@@ -50,6 +50,16 @@ juce::String MidiStore::getName()
 }
 
 /**
+ * @brief Remove the midi events from the store
+ */
+void MidiStore::clear()
+{
+    const ScopedLock lock(storeLock);
+    // Note - Intentionally ignoring the recordData state change flag on this
+    trackData->removeAllChildren(nullptr);
+}
+
+/**
  * @brief Add a midi note on/off event at the given time
  *
  * @param int64 time   time info derived from AudioProcessor::processBlock callback
@@ -58,6 +68,8 @@ juce::String MidiStore::getName()
  */
 void MidiStore::addNoteEventAtTime(int64 time, int note, bool isOn)
 {
+    if (!allowDataRecording) 
+        return;
     const ScopedLock lock(storeLock);
     // Find the valuetree for this time (create it if it does not exist)
     ValueTree child = ensureNoteEventAtTime(time);
