@@ -50,6 +50,15 @@ juce::String MidiStore::getName()
 }
 
 /**
+ * @brief Remove the midi events from the store
+ */
+void MidiStore::clear()
+{
+    const ScopedLock lock(storeLock);
+    trackData->removeAllChildren(nullptr);
+}
+
+/**
  * @brief Add a midi note on/off event at the given time
  *
  * @param int64 time   time info derived from AudioProcessor::processBlock callback
