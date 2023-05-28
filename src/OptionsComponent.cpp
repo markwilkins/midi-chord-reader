@@ -8,9 +8,15 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
     propsPanel.setColour(juce::GroupComponent::ColourIds::outlineColourId, juce::Colours::darkgrey);
     propsPanel.addChildComponent(&resetChords);
     addAndMakeVisible(propsPanel);
-    resetChords.setButtonText("Reset!");
+    resetChords.setButtonText("Clear Notes!");
     propsPanel.addAndMakeVisible(&resetChords);
+    recordingOn.setButtonText("Record Notes");
+    propsPanel.addAndMakeVisible(&recordingOn);
+
+    // click handler lambdas
     resetChords.onClick = [this] { resetClick(); };
+    recordingOn.onStateChange = [this] {recordingClick(recordingOn.getToggleState()); };
+    recordingOn.setToggleState(ms.getRecordingState(), juce::sendNotification);
 }
 
 /**
@@ -20,6 +26,11 @@ void OptionsComponent::resetClick()
 {
     DBG("Reset click happened");
     midiState.clear();
+}
+
+void OptionsComponent::recordingClick(bool state)
+{
+    midiState.allowStateChange(state);
 }
 
 void OptionsComponent::paint(juce::Graphics &g) // override
@@ -33,6 +44,7 @@ void OptionsComponent::resized() // override
     int  buttonHeight = 40;
 
     propsPanel.setBounds(area);
-    resetChords.setBounds(20, area.getHeight() / 2 - buttonHeight / 2, 80, buttonHeight);
+    resetChords.setBounds(20, area.getHeight() / 2 - buttonHeight / 2, 100, buttonHeight);
+    recordingOn.setBounds(resetChords.getBounds().getWidth() + 40, area.getHeight() / 2 - buttonHeight / 2, 100, buttonHeight);
 
 }

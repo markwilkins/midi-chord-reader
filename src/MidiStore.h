@@ -34,9 +34,13 @@ public:
     std::vector<int> getAllNotesOnAtTime(int64 startTime, int64 endTime);
     std::vector<int64> getEventTimes();
     void clear();
+    void allowStateChange(bool allow) {allowDataRecording = allow;}
+    bool getRecordingState() {return allowDataRecording;}
 
 
 private:
+    // If this is true, then save state changes. Otherwise, don't
+    bool allowDataRecording = true;
     // Critical section for concurrent access. The editor will be reading it. processor updates it
     CriticalSection storeLock;
 

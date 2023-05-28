@@ -14,9 +14,12 @@ public:
 
     void resetClick();
 
+    void recordingClick(bool state);
+
 private:
     juce::GroupComponent propsPanel;
     juce::TextButton resetChords;
+    juce::ToggleButton recordingOn;
     void paint(juce::Graphics &g) override;
     MidiStore &midiState;
 

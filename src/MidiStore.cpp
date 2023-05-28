@@ -55,6 +55,7 @@ juce::String MidiStore::getName()
 void MidiStore::clear()
 {
     const ScopedLock lock(storeLock);
+    // Note - Intentionally ignoring the recordData state change flag on this
     trackData->removeAllChildren(nullptr);
 }
 
@@ -67,6 +68,8 @@ void MidiStore::clear()
  */
 void MidiStore::addNoteEventAtTime(int64 time, int note, bool isOn)
 {
+    if (!allowDataRecording) 
+        return;
     const ScopedLock lock(storeLock);
     // Find the valuetree for this time (create it if it does not exist)
     ValueTree child = ensureNoteEventAtTime(time);

@@ -2,6 +2,7 @@
 #include "MidiStore.h"
 #include <algorithm>
 #include <random>
+using namespace std;
 
 TEST_CASE("midi store basics")
 {
@@ -41,6 +42,25 @@ TEST_CASE("note storage basics", "storage")
     ms.clear();
     notes = ms.getNoteOnEventsAtTime(50);
     REQUIRE(notes.size() == 0);
+
+}
+
+TEST_CASE("test state change flag", "storage")
+{
+    MidiStore ms;
+    vector<int> notes;
+    vector<int> expected;
+
+    // verify that the state change flag is obeyed
+    ms.allowStateChange(false);
+    ms.addNoteEventAtTime(50, 15, true);
+    notes = ms.getAllNotesOnAtTime(0, 200);
+    REQUIRE(notes.size() == 0);
+    ms.allowStateChange(true);
+    ms.addNoteEventAtTime(50, 15, true);
+    notes = ms.getAllNotesOnAtTime(0, 200);
+    REQUIRE(notes.size() == 1);
+
 }
 
 TEST_CASE("empty note slot", "storage")
