@@ -4,7 +4,7 @@
 #include <random>
 using namespace std;
 
-TEST_CASE("midi store basics")
+TEST_CASE("midi store basics", "storage")
 {
     MidiStore ms;
     REQUIRE(ms.hasData() == false);
@@ -200,11 +200,19 @@ TEST_CASE("get event times", "storage")
 
     ms.addNoteEventAtTime(25, 1, true);
     ms.addNoteEventAtTime(25, 2, true);
+    ms.setEventTimeSeconds(25, 2.34);
     times = ms.getEventTimes();
     expected = {25};
     REQUIRE(times == expected);
+    double seconds = ms.getEventTimeInSeconds(24);
+    REQUIRE(seconds == 0.0);
+    seconds = ms.getEventTimeInSeconds(25);
+    REQUIRE(seconds == 2.34);
 
     ms.addNoteEventAtTime(30, 2, false);
+    ms.setEventTimeSeconds(30, 3.34);
+    // This one should be a no-op since time 31 does not exist
+    ms.setEventTimeSeconds(31, 3.35);
     ms.addNoteEventAtTime(38, 88, true);
     ms.addNoteEventAtTime(27, 42, true);
     times = ms.getEventTimes();

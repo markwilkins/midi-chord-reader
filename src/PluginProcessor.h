@@ -69,7 +69,15 @@ public:
 
 private:
     MidiStore referenceTrack;
-    int64 currentPlayheadPosition();
+    pair<int64, double> currentPlayheadPosition();
+
+    // variables for some of the pluginprocessor things I don't need yet
+    int currentProgram = 0;
+    juce::String programName = "";
+    double currentSampleRate = 0.0;
+    int currentSamplesPerBlock;
+    juce::MemoryBlock *stateInfo = nullptr;
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiChordsAudioProcessor)
 };

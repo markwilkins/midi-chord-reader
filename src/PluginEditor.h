@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "OptionsComponent.h"
+#include "ChordView.h"
 
 //==============================================================================
 /**
@@ -33,10 +34,11 @@ private:
     // access the processor object that created it.
     MidiChordsAudioProcessor& audioProcessor;
 
-    juce::Label currentNote;
-    juce::Label currentTime;
-    juce::Label currentTimestamp;
+    juce::Label currentChords;
+    juce::Label lastTimeStamp;
+    juce::Label lastChordSeen;
     OptionsComponent options;
+    ChordView chordView;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiChordsAudioProcessorEditor)
 };

@@ -142,6 +142,19 @@ TEST_CASE("three note chords", "chordident")
     name = cn.nameChord(notes);
     REQUIRE(name == "C/E");
 
+    // mlwtbd todo: Here are a couple of examples where I think it is necessary to specify the actual key that we are in
+    // The current logic that deduces sharp/flat from the chord fails for these. Both of them return the flat chord
+    // but they are ones that could be shard chord as the iii and V chords. I need to change the identifier method 
+    // to allow (require?) the key to be passed in.
+    // C#EG# . (the minor 3rd of A major)
+    notes = {1, 4, 8};
+    name = cn.nameChord(notes);
+    //REQUIRE(name == "C#min");
+    // F#A#C# (the V chord of B major)
+    notes = {18, 22, 25};
+    name = cn.nameChord(notes);
+    //REQUIRE(name == "F#");
+
 }
 
 TEST_CASE("four note chords", "chordident")
@@ -177,6 +190,7 @@ TEST_CASE("four note chords", "chordident")
     // notes = {17, 19, 22, 26};
     // name = cn.nameChord(notes);
     // REQUIRE(name == "Gmin/F");
+
 }
 
 TEST_CASE("test gap rotation", "chordtransform")
