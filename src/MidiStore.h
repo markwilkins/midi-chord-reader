@@ -47,12 +47,17 @@ public:
     int64 getLastEventTime() {return lastEventTime;}
     double getLastEventTimeInSeconds() {return lastEventTimeInSeconds;}
 
+    void setIsPlaying(bool playing) {isPlaying = playing;}
+    bool getIsPlaying() {return isPlaying;}
+
 
 private:
     // Critical section for concurrent access. The editor will be reading it. processor updates it
     CriticalSection storeLock;
     // If this is true, then save state changes. Otherwise, don't
     bool allowDataRecording = true;
+    // flag indicating if we think playback is occuring
+    bool isPlaying = false;
 
     // Maintain the most recent time we received an event. This is for keeping aware of where the 
     // current location is in the playback. If this doesn't provide enough detail, then I might

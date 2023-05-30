@@ -145,6 +145,13 @@ bool MidiChordsAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     pair<int64, double> posOfBlock = currentPlayheadPosition();
+    AudioPlayHead::CurrentPositionInfo info;
+
+    if (auto positionInfo = getPlayHead()->getPosition()) 
+    {
+        //mlwtbd - this position info struct has lots of info ... might provide details for converting time event to seconds
+        this->referenceTrack.setIsPlaying(positionInfo->getIsPlaying());
+    }
 
     for (const auto metadata : midiMessages)
     {

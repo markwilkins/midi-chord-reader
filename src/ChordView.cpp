@@ -27,7 +27,8 @@ void ChordView::update()
         // This is not an atomic add ... but this method is the only one updating this value and I *assume* (yeah yeah) that
         // update() would not be called concurrently on multiple threads. Worst case is the read and add would be out of
         // sync and basically reset it to an older value. Next time an actual playhead event occurs, it will be fixed.
-        estimatedPlayPosition = estimatedPlayPosition + static_cast<float>(ms / 1000.0);
+        if (midiState.getIsPlaying())
+            estimatedPlayPosition = estimatedPlayPosition + static_cast<float>(ms / 1000.0);
     }
 }
 
@@ -36,20 +37,18 @@ void ChordView::paint(juce::Graphics &g)
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
-    g.setColour(getLookAndFeel().findColour(juce::Slider::thumbColourId));
 
-    int radius = 25;
-
-    juce::Point<float> p((float)getWidth() / 2.0f + 1.0f * (float)radius * std::sin((float)getFrameCounter() * 0.04f),
-                         (float)getHeight() / 2.0f + 1.0f * (float)radius * std::cos((float)getFrameCounter() * 0.04f));
-
-    // g.fillEllipse(p.x, p.y, 30.0f, 30.0f);
     // juce::Rectangle<float> textBox;
     // auto area = getLocalBounds();
     // textBox = {static_cast<float>(area.getX()), static_cast<float>(area.getY()), static_cast<float>(area.getWidth()), static_cast<float>(area.getHeight())};
     // string chords = chordsToShow();
     // g.setFont(25.0);
     // g.drawText(chords, textBox, juce::Justification::centred);
+    int x = static_cast<int>(getWidth() * this->currentNotePosition / this->viewWidthInSeconds);
+    g.setColour(juce::Colours::red);
+    g.drawVerticalLine(x, 0, getHeight());
+
+    g.setColour(getLookAndFeel().findColour(juce::Slider::thumbColourId));
     map<float, string> chords = this->getChordsToDisplay();
     this->drawChords(chords, g);
 }
