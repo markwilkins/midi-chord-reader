@@ -72,6 +72,7 @@ target_sources(MidiChords
         src/MidiStore.cpp
         src/ChordName.cpp
         src/ChordView.cpp
+        src/ChordClipper.cpp
         )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer

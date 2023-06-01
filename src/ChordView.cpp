@@ -28,7 +28,7 @@ void ChordView::update()
         // update() would not be called concurrently on multiple threads. Worst case is the read and add would be out of
         // sync and basically reset it to an older value. Next time an actual playhead event occurs, it will be fixed.
         if (midiState.getIsPlaying())
-            estimatedPlayPosition = estimatedPlayPosition + static_cast<float>(ms / 1000.0);
+            this->estimatedPlayPosition = this->estimatedPlayPosition + static_cast<float>(ms / 1000.0);
     }
 }
 
@@ -65,7 +65,6 @@ void ChordView::drawChords(map<float, string> chords, juce::Graphics &g)
     map<float, string>::iterator it;
     auto area = getLocalBounds();
     juce::Rectangle<float> textBox;
-    //textBox = {static_cast<float>(area.getX()), static_cast<float>(area.getY()), static_cast<float>(area.getWidth()), static_cast<float>(area.getHeight())};
     textBox = area.toFloat();
     g.setFont(25.0);
     float ratio = textBox.getWidth() / this->viewWidthInSeconds;
