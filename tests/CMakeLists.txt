@@ -1,19 +1,16 @@
 cmake_minimum_required(VERSION 3.15)
-project(tests) 
+project(tests VERSION 0.0.1) 
 
 find_package(Catch2 3 REQUIRED)
     
 
-#FetchContent_MakeAvailable(JUCE)
 
-#include_directories (../Source
-#${CMAKE_SOURCE_DIR}
-#)
 
 #note to self: For next test, just add it to this list
 add_executable(${PROJECT_NAME} 
     midiStoreTest.cpp
     chordNameTest.cpp
+    chordClipperTest.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} 

@@ -80,6 +80,21 @@ void MidiStore::addNoteEventAtTime(int64 time, int note, bool isOn)
 }
 
 /**
+ * @brief Store the time in seconds for an event
+ * 
+ * @param time      the native integer event time
+ * @param seconds   Number of seconds associated with the event
+ */
+void MidiStore::setEventTimeSeconds(int64 time, double seconds) 
+{
+    Identifier timeProp = notesAtIdent(time);
+    const ScopedLock lock(storeLock);
+    ValueTree eventTree = trackData->getChildWithName(timeProp);
+    if (eventTree.isValid()) 
+        eventTree.setProperty("eventTimeInSeconds", seconds, nullptr);
+}
+
+/**
  * @brief Make sure a child exists at the specified time. If not add it in sorted order
  * 
  * @param time 
@@ -208,6 +223,26 @@ std::vector<int> MidiStore::getAllNotesOnAtTime(int64 startTime, int64 endTime)
         returnVal.push_back(notes[i]);
 
     return returnVal;
+}
+
+/**
+ * @brief Retrieve the time (in seconds) associated with this event
+ * 
+ * @param time 
+ * @return double 
+ */
+double MidiStore::getEventTimeInSeconds(int64 time) 
+{
+    double seconds = 0.0;
+    Identifier timeProp = notesAtIdent(time);
+    const ScopedLock lock(storeLock);
+    ValueTree eventTree = trackData->getChildWithName(timeProp);
+    if (eventTree.isValid()) 
+    {
+        seconds = eventTree.getProperty("eventTimeInSeconds");
+    }
+
+    return seconds;
 }
 
 
