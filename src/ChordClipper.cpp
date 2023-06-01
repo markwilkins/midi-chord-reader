@@ -3,10 +3,8 @@
 
 using namespace std;
 
-
 ChordClipper::ChordClipper(MidiStore &ms) : midiState(ms)
 {
-
 }
 
 void ChordClipper::updateCurrentPosition(int msSinceLastUpdate)
@@ -91,7 +89,7 @@ bool ChordClipper::isEventInWindow(pair<float, float> viewWindow, float eventSec
 {
     // Include some buffer on each end to avoid having them pop in/out of view rather than slide in/off smoothly
     relativePosition = 0.0;
-    float buffer = 25.0;
+    float buffer = 2.0;  // seconds
     if (eventSeconds >= viewWindow.first - buffer && eventSeconds <= viewWindow.second + buffer)
     {
         relativePosition = eventSeconds - viewWindow.first;

@@ -6,15 +6,21 @@ using namespace std;
 
 /**
  * @brief This is a helper class for ChordView to determine which chords are in view
+ * This does the math calculation offsets of the current position of the viewable window
+ * with respect to the currently played notes. The window might be displaying from
+ * seconds 50 to 70, for example. It will return the chord names that fall in that window
+ * (with some buffer on each side to allow for smoother transition of the chords in/out of view).
  * 
  */
 class ChordClipper
 {
 public:
     ChordClipper(MidiStore&);
-
     map<float, string> getChordsToDisplay();
     void updateCurrentPosition(int msSinceLastUpdate);
+
+    float getViewWidthInSeconds() {return viewWidthInSeconds;}
+    float getCurrentNotePosition() {return currentNotePosition;}
 
 private:
 
