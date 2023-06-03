@@ -1,3 +1,13 @@
+/**
+ * @file ChordClipper.cpp
+ * @author Mark Wilkins
+ * @brief Part of MidiChords project (plugin to display chord names from a MIDI track on playback)
+ * @version 0.1
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #include "ChordName.h"
 #include "ChordClipper.h"
 
