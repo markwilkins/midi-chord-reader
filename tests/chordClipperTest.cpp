@@ -8,6 +8,7 @@ using namespace std;
 TEST_CASE("chord view empty", "chordview")
 {
     MidiStore ms;
+    ms.setQuantizationValue(1);
     ChordClipper cp(ms);
     map<float, string> display;
 
@@ -19,6 +20,7 @@ TEST_CASE("chord view empty", "chordview")
 TEST_CASE("chord view window", "chordview")
 {
     MidiStore ms;
+    ms.setQuantizationValue(1);
 
     // Note - The relative event times and times in seconds are not relative. The ones that
     // matter here are the seconds. The integer event times just need to be incrementing

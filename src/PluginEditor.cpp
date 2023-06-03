@@ -33,7 +33,7 @@ MidiChordsAudioProcessorEditor::MidiChordsAudioProcessorEditor (MidiChordsAudioP
     addAndMakeVisible(&options);
     addAndMakeVisible(&chordView);
 
-    Timer::startTimer(100);
+    Timer::startTimer(1000);
 }
 
 MidiChordsAudioProcessorEditor::~MidiChordsAudioProcessorEditor()
@@ -67,7 +67,12 @@ void MidiChordsAudioProcessorEditor::timerCallback()
         vector<int> itNotes = ms->getAllNotesOnAtTime(0, *i);
         lastChord = cn.nameChord(itNotes);
         if (lastChord != "") 
-            info += lastChord + ", ";
+        {
+            double seconds = ms->getEventTimeInSeconds(*i);
+            ostringstream oss;
+            oss << info << lastChord << " (" << *i << ", " << seconds << "), ";
+            info = oss.str();
+        }
     }
     currentChords.setText("all chords: " + info, juce::NotificationType::sendNotification);
 
