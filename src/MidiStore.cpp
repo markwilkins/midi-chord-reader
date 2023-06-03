@@ -2,16 +2,17 @@
 #include "MidiStore.h"
 
 using namespace juce;
+using namespace std;
 
-MidiStore::MidiStore()
+MidiStore::MidiStore() : chordState("name")
 {
-    static juce::Identifier propertyName("name");
-    trackData = new juce::ValueTree(propertyName);
+    // Start out with our current version; a load of older version might change it
+    chordState.setProperty(this->midiChordsVersionProp, this->currentVersion, nullptr);
 }
 
 MidiStore::~MidiStore()
 {
-    delete trackData;
+    //delete chordState;
 }
 
 /**
@@ -21,7 +22,7 @@ MidiStore::~MidiStore()
  */
 bool MidiStore::hasData()
 {
-    if (trackData->getNumChildren() > 0)
+    if (chordState.getNumChildren() > 0)
         return true;
     else
         return false;
@@ -35,7 +36,7 @@ bool MidiStore::hasData()
 void MidiStore::setName(juce::String name)
 {
     static juce::Identifier propertyName("name");
-    trackData->setProperty(propertyName, name, nullptr);
+    chordState.setProperty(propertyName, name, nullptr);
 }
 
 /**
@@ -46,7 +47,32 @@ void MidiStore::setName(juce::String name)
 juce::String MidiStore::getName()
 {
     static juce::Identifier propertyName("name");
-    return trackData->getProperty(propertyName);
+    return chordState.getProperty(propertyName);
+}
+
+
+/**
+ * @brief Replace the state info with the new value tree. This is intended for loading saved state
+ * 
+ * @param ValueTree newState 
+ */
+bool MidiStore::replaceState(ValueTree &newState)
+{
+    // check the version of the state and make sure we can work with it
+    if (!newState.hasProperty(this->midiChordsVersionProp)) 
+    {
+        DBG("Cannot load saved state. It does not appear to be valid");
+        return false;
+    }
+
+    int version = newState.getProperty(this->midiChordsVersionProp);
+    if (version > this->currentVersion)
+    {
+        DBG("Cannot load saved state. It is from a newer version of the plugin. Version: " + to_string(version));
+        return false;
+    }
+    chordState = newState;
+    return true;
 }
 
 /**
@@ -56,7 +82,7 @@ void MidiStore::clear()
 {
     const ScopedLock lock(storeLock);
     // Note - Intentionally ignoring the recordData state change flag on this
-    trackData->removeAllChildren(nullptr);
+    chordState.removeAllChildren(nullptr);
 }
 
 /**
@@ -70,13 +96,34 @@ void MidiStore::addNoteEventAtTime(int64 time, int note, bool isOn)
 {
     if (!allowDataRecording) 
         return;
+    time = quantizeEventTime(time);
+
     const ScopedLock lock(storeLock);
     // Find the valuetree for this time (create it if it does not exist)
     ValueTree child = ensureNoteEventAtTime(time);
 
     // Store the note with the identifier (the label) being the note number and the value being bool on/off
-    Identifier noteProp(std::to_string(note));
+    Identifier noteProp = noteIdentFromInt(note);
     child.setProperty(noteProp, isOn, nullptr);
+}
+
+
+/**
+ * @brief I'm not sure if it is my interpretation of the incoming data being slightly off or if that's simply the nature
+ * but on playbacks, the int64 even time is not always exactly the same. This rounds the value to the nearest Nth.
+ * The N defaults to 1000 because that seems a good value for my use case. If this doesn't work for other DAWs, then
+ * I will need to make this controllable.
+ * 
+ * @param int64 time 
+ * @return int64      Return value rounded to the nearest quantization value. If q=1000, then 12345 will be 12000
+ *                    and 12555 will be 13000
+ */
+int64 MidiStore::quantizeEventTime(int64 time) 
+{
+    int qValue = this->getQuantizationValue();
+    double fraction = round(static_cast<double>(time) / qValue);
+    int64 rounded = static_cast<int64>(fraction);
+    return rounded * qValue;
 }
 
 /**
@@ -87,11 +134,12 @@ void MidiStore::addNoteEventAtTime(int64 time, int note, bool isOn)
  */
 void MidiStore::setEventTimeSeconds(int64 time, double seconds) 
 {
+    time = this->quantizeEventTime(time);
     Identifier timeProp = notesAtIdent(time);
     const ScopedLock lock(storeLock);
-    ValueTree eventTree = trackData->getChildWithName(timeProp);
+    ValueTree eventTree = chordState.getChildWithName(timeProp);
     if (eventTree.isValid()) 
-        eventTree.setProperty("eventTimeInSeconds", seconds, nullptr);
+        eventTree.setProperty(eventTimeInSecondsProp, seconds, nullptr);
 }
 
 /**
@@ -104,10 +152,14 @@ ValueTree MidiStore::ensureNoteEventAtTime(int64 time)
 {
     Identifier timeProp = notesAtIdent(time);
     const ScopedLock lock(storeLock);
-    ValueTree existingChild = trackData->getChildWithName(timeProp);
+    ValueTree existingChild = chordState.getChildWithName(timeProp);
     if (existingChild.isValid()) 
         return existingChild;
     
+    if (maxTimeStored == 0) 
+        // On a load of a saved state, this won't be set; make it be set now
+        maxTimeStored = findMaxTime();
+
     int pos;
     if (time > maxTimeStored) 
     {
@@ -119,10 +171,10 @@ ValueTree MidiStore::ensureNoteEventAtTime(int64 time)
     {
         // super bad cheesy insertion sort ... assumption is that this is relatively uncommon
         pos = 0;
-        for (ValueTree::Iterator events = trackData->begin(); events != trackData->end(); ++events)
+        for (ValueTree::Iterator events = chordState.begin(); events != chordState.end(); ++events)
         {
             ValueTree child = *events;
-            int64 eventTime = child.getProperty("eventTime");
+            int64 eventTime = child.getProperty(eventTimeProp);
             jassert(eventTime != time);
             if (eventTime > time)
                 break;
@@ -134,9 +186,26 @@ ValueTree MidiStore::ensureNoteEventAtTime(int64 time)
     ValueTree newChild(timeProp);
     // Make sure it has the time stored
     // tbd : need to convert this to an identifier
-    newChild.setProperty("eventTime", time, nullptr);
-    trackData->addChild(newChild, pos, nullptr);
+    newChild.setProperty(eventTimeProp, time, nullptr);
+    chordState.addChild(newChild, pos, nullptr);
     return newChild;
+}
+
+/**
+ * @brief Retrieve the maximum event time of all the children in the value tree. 
+ * 
+ * @return int64 
+ */
+int64 MidiStore::findMaxTime()
+{
+    int64 max = 0;
+    for (ValueTree::Iterator events = chordState.begin(); events != chordState.end(); ++events)
+    {
+        ValueTree child = *events;
+        int64 eventTime = child.getProperty(eventTimeProp);
+        max = std::max(max, eventTime);
+    }
+    return max;
 }
 
 
@@ -145,21 +214,22 @@ ValueTree MidiStore::ensureNoteEventAtTime(int64 time)
  * This is the list of notes that have on events at the time (not necessarily all notes that are on)
  *
  * @param int64 time
- * @return std::vector<int>
+ * @return vector<int>
  */
-std::vector<int> MidiStore::getNoteOnEventsAtTime(int64 time)
+vector<int> MidiStore::getNoteOnEventsAtTime(int64 time)
 {
+    time = this->quantizeEventTime(time);
     Identifier timeProp = notesAtIdent(time);
     const ScopedLock lock(storeLock);
-    ValueTree child = trackData->getChildWithName(timeProp);
-    std::vector<int> notes;
+    ValueTree child = chordState.getChildWithName(timeProp);
+    vector<int> notes;
     for (int i = 0; i < child.getNumProperties(); ++i)
     {
         Identifier noteIdent = child.getPropertyName(i);
         String eventStr = noteIdent.toString();
         int note;
         // If this is not an integer, it is not a note event. Skip it in that case
-        if (!stringToInt(eventStr, &note))
+        if (!noteIdentToInt(eventStr, &note))
         {
             continue;
         }
@@ -173,7 +243,7 @@ std::vector<int> MidiStore::getNoteOnEventsAtTime(int64 time)
     // Need to figure out the nuances of the scopedlock ... ideally should release the lock here before the
     // sort operation. Or maybe move the extraction call/loop above into a simple method and use the scoped
     // lock there.
-    std::sort(notes.begin(), notes.end());
+    sort(notes.begin(), notes.end());
     return notes;
 }
 
@@ -184,30 +254,33 @@ std::vector<int> MidiStore::getNoteOnEventsAtTime(int64 time)
  *
  * @param int64 startTime     Ignore notes before this time
  * @param int64 endTime       Point in time of interest
- * @return std::vector<int>   Note values at that time
+ * @return vector<int>   Note values at that time
  */
-std::vector<int> MidiStore::getAllNotesOnAtTime(int64 startTime, int64 endTime)
+vector<int> MidiStore::getAllNotesOnAtTime(int64 startTime, int64 endTime)
 {
     const ScopedLock lock(storeLock);
     SortedSet<int> notes;
 
+    startTime = this->quantizeEventTime(startTime);
+    endTime = this->quantizeEventTime(endTime);
+
     // Brute force for now. Start at the beginning and work through
-    for (ValueTree::Iterator events = trackData->begin(); events != trackData->end(); ++events)
+    for (ValueTree::Iterator events = chordState.begin(); events != chordState.end(); ++events)
     {
         ValueTree child = *events;
         for (int i = 0; i < child.getNumProperties(); ++i)
         {
-            int64 eventTime = child.getProperty("eventTime");
+            int64 eventTime = child.getProperty(eventTimeProp);
             if (eventTime < startTime) 
                 continue;
             if (eventTime > endTime)
                 break;
 
             Identifier noteIdent = child.getPropertyName(i);
-            std::string eventStr = noteIdent.toString().toStdString();
+            string eventStr = noteIdent.toString().toStdString();
             int note;
             // If this is not an integer, it is not a note event. Skip it in that case
-            if (!stringToInt(eventStr, &note))
+            if (!noteIdentToInt(eventStr, &note))
                 continue;
 
             bool isOn = child.getProperty(noteIdent);
@@ -218,7 +291,7 @@ std::vector<int> MidiStore::getAllNotesOnAtTime(int64 startTime, int64 endTime)
         }
     }
 
-    std::vector<int> returnVal;
+    vector<int> returnVal;
     for (int i = 0; i < notes.size(); i++)
         returnVal.push_back(notes[i]);
 
@@ -234,12 +307,13 @@ std::vector<int> MidiStore::getAllNotesOnAtTime(int64 startTime, int64 endTime)
 double MidiStore::getEventTimeInSeconds(int64 time) 
 {
     double seconds = 0.0;
+    time = this->quantizeEventTime(time);
     Identifier timeProp = notesAtIdent(time);
     const ScopedLock lock(storeLock);
-    ValueTree eventTree = trackData->getChildWithName(timeProp);
+    ValueTree eventTree = chordState.getChildWithName(timeProp);
     if (eventTree.isValid()) 
     {
-        seconds = eventTree.getProperty("eventTimeInSeconds");
+        seconds = eventTree.getProperty(eventTimeInSecondsProp);
     }
 
     return seconds;
@@ -249,53 +323,103 @@ double MidiStore::getEventTimeInSeconds(int64 time)
 /**
  * @brief Retrieve all times where event changes occur
  * 
- * @return std::vector<int64> 
+ * @return vector<int64> 
  */
-std::vector<int64> MidiStore::getEventTimes() {
+vector<int64> MidiStore::getEventTimes() {
     const ScopedLock lock(storeLock);
-    std::vector<int64> eventTimes;
+    vector<int64> eventTimes;
 
-    for (ValueTree::Iterator events = trackData->begin(); events != trackData->end(); ++events)
+    for (ValueTree::Iterator events = chordState.begin(); events != chordState.end(); ++events)
     {
         ValueTree child = *events;
-        int64 eventTime = child.getProperty("eventTime");
+        int64 eventTime = child.getProperty(eventTimeProp);
         eventTimes.push_back(eventTime);
     }
 
     return eventTimes;
 }
 
+
 /**
- * @brief Convert a juce string to an integer
- * Could just use the built-in getIntValue, but it returns 0 if not a string with no indicator 
- * that I can see if it wasn't an integer
- *
- * @param str
- * @param value
- * @return bool  True if converted, false if not (e.g., not an integer)
+ * @brief Store the given quantization value. 
+ * 
+ * maybe todo: If this gets set to a different value, then it is likely necessary to update
+ * the existing event times in the tree accordingly. But that is tricky if the quantization
+ * value is reduced. Unless we saved the original event times, then we can't refine the
+ * quantization (rounding). 
+ * 
+ * @param int q   new quantization value
  */
-bool MidiStore::stringToInt(String str, int *value)
+void MidiStore::setQuantizationValue(int q) 
 {
-    std::string stdstr = str.toStdString();
-    if (stdstr.find_first_not_of("0123456789") != std::string::npos)
+    chordState.setProperty(quantizationValueProp, q, nullptr);
+}
+
+/**
+ * @brief Retrieve the integer quantization (rounding) value
+ * 
+ * @return int 
+ */
+int MidiStore::getQuantizationValue()
+{
+    int q = 0;
+    if (chordState.hasProperty(quantizationValueProp))
+        q = chordState.getProperty(quantizationValueProp);
+
+    // default to 1000 ... for no good reason other than that it works well for Logic Pro X
+    return q > 0 ? q : 1000;
+}
+
+
+
+/**
+ * @brief Convert an ident of the form ":<int>" to the integer. Returns false if not in that form
+ *
+ * @param String str
+ * @param int    *value
+ * @return bool  True if converted, false if not (e.g., not an integer, or not of right form)
+ */
+bool MidiStore::noteIdentToInt(String str, int *value)
+{
+
+    if (!str.startsWithChar(':')) 
+        return false;
+
+    string stdstr = str.substring(1).toStdString();
+    if (stdstr.find_first_not_of("0123456789") != string::npos)
     {
         // Not an integer apparently
         return false;
     }
-    *value = std::stoi(stdstr);
+    *value = stoi(stdstr);
     return true;
 }
 
+/**
+ * @brief Create a ValueTree identifier for an integer midi note value
+ * I was using the integer value as the label, but I also want to use the xml conversion logic built 
+ * into the ValueTree for save/restore. And a simple integer is not a valid XML name. So use a : prefix
+ *
+ * @param int64 time
+ * @return Identifier
+ */
+Identifier MidiStore::noteIdentFromInt(int note)
+{
+    ostringstream oss;
+    oss << ":" << note;
+    Identifier noteProp(oss.str());
+    return noteProp;
+}
 
 /**
- * @brief Create a ValudTree identifier for notes at a given time
+ * @brief Create a ValueTree identifier for notes at a given time
  *
  * @param int64 time
  * @return Identifier
  */
 Identifier MidiStore::notesAtIdent(int64 time)
 {
-    std::ostringstream oss;
+    ostringstream oss;
     oss << "notesat:" << time;
     Identifier timeProp(oss.str());
     return timeProp;

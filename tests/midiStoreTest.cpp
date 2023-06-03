@@ -15,12 +15,52 @@ TEST_CASE("midi store basics", "storage")
     REQUIRE(name == "my new name");
     ms.addNoteEventAtTime(50, 123, true);
     REQUIRE(ms.hasData() == true);
+
+}
+
+// Some basic testing associated with save/restore work
+TEST_CASE("tree replacement", "storage")
+{
+    MidiStore ms;
+    bool replaced;
+
+    ms.setName("test 2");
+    ms.setQuantizationValue(1);
+    ms.addNoteEventAtTime(100, 12, true);
+    juce::ValueTree vto = ms.getState();
+
+    // do some swaparoo things and see if it works as expected 
+    juce::ValueTree vtn("restored");
+    vtn.setProperty("randokey", "randovalue", nullptr);
+
+    // Should fail with no version info
+    replaced = ms.replaceState(vtn);
+    REQUIRE(replaced == false);
+    // should fail with unknown version
+    vtn.setProperty(ms.midiChordsVersionProp, ms.currentVersion + 1, nullptr);
+    replaced = ms.replaceState(vtn);
+    REQUIRE(replaced == false);
+
+    vtn.setProperty(ms.midiChordsVersionProp, ms.currentVersion, nullptr);
+    replaced = ms.replaceState(vtn);
+    REQUIRE(replaced == true);
+    vector<int> notes = ms.getNoteOnEventsAtTime(100);
+    REQUIRE(notes.size() == 0);
+
+    juce::ValueTree vtc = ms.getState();
+    REQUIRE(vtc.getProperty("randokey") == "randovalue");
+
+    replaced = ms.replaceState(vto);
+    REQUIRE(replaced == true);
+    notes = ms.getNoteOnEventsAtTime(100);
+    REQUIRE(notes.size() == 1);
 }
 
 TEST_CASE("note storage basics", "storage")
 {
     MidiStore ms;
 
+    ms.setQuantizationValue(1);
     ms.addNoteEventAtTime(50, 123, true);
     std::vector<int> notes = ms.getNoteOnEventsAtTime(50);
     REQUIRE(notes.size() == 1);
@@ -51,6 +91,7 @@ TEST_CASE("test state change flag", "storage")
     vector<int> notes;
     vector<int> expected;
 
+    ms.setQuantizationValue(1);
     // verify that the state change flag is obeyed
     ms.allowStateChange(false);
     ms.addNoteEventAtTime(50, 15, true);
@@ -74,6 +115,7 @@ TEST_CASE("notes off", "storage")
 {
     MidiStore ms;
 
+    ms.setQuantizationValue(1);
     ms.addNoteEventAtTime(50, 120, false);
     ms.addNoteEventAtTime(50, 127, false);
     std::vector<int> notes = ms.getNoteOnEventsAtTime(50);
@@ -84,6 +126,7 @@ TEST_CASE("notes on and off", "storage")
 {
     MidiStore ms;
 
+    ms.setQuantizationValue(1);
     // two note off events and one on
     ms.addNoteEventAtTime(50, 120, false);
     ms.addNoteEventAtTime(50, 123, true);
@@ -98,6 +141,7 @@ TEST_CASE("notes time case 2", "storage")
     MidiStore ms;
     std::vector<int> notes;
 
+    ms.setQuantizationValue(1);
     // Corner case where the off is added out of order. This essentially
     // verifies that events are kept in order in the MidiStore
     ms.addNoteEventAtTime(15, 100, false);
@@ -114,6 +158,7 @@ TEST_CASE("notes on simple", "storage")
 
     std::vector<int> notes = {0};
 
+    ms.setQuantizationValue(1);
     notes = ms.getAllNotesOnAtTime(0, 25);
     REQUIRE(notes.size() == 0);
 
@@ -129,6 +174,30 @@ TEST_CASE("notes on simple", "storage")
     REQUIRE(notes[0] == 120);
 }
 
+TEST_CASE("quantization", "storage")
+{
+    MidiStore ms;
+    std::vector<int> notes;
+    std::vector<int> expected;
+    ms.setQuantizationValue(1000);
+
+    ms.addNoteEventAtTime(5123, 12, true);
+    ms.addNoteEventAtTime(4811, 13, true);
+    notes = ms.getAllNotesOnAtTime(0, 4900);
+    expected = {12, 13};
+    REQUIRE(notes == expected);
+    notes = ms.getNoteOnEventsAtTime(5000);
+    expected = {12, 13};
+    REQUIRE(notes == expected);
+    notes = ms.getNoteOnEventsAtTime(4500);
+    REQUIRE(notes == expected);
+    notes = ms.getNoteOnEventsAtTime(5499);
+    REQUIRE(notes == expected);
+    // round up - this ends up at 6000
+    notes = ms.getNoteOnEventsAtTime(5500);
+    REQUIRE(notes.size() == 0);
+}
+
 // This is a simple chord sequence that provides a more "end to end" test of the class
 TEST_CASE("notes on random", "storage")
 {
@@ -142,6 +211,7 @@ TEST_CASE("notes on random", "storage")
     std::vector<event> events;
     std::vector<int> notes;
 
+    ms.setQuantizationValue(1);
     events = {
         // C
         {10, 60, true},
@@ -194,37 +264,38 @@ TEST_CASE("get event times", "storage")
     MidiStore ms;
     std::vector<int64> times;
     std::vector<int64> expected;
+    ms.setQuantizationValue(10);
 
     times = ms.getEventTimes();
     REQUIRE(times.size() == 0);
 
-    ms.addNoteEventAtTime(25, 1, true);
-    ms.addNoteEventAtTime(25, 2, true);
-    ms.setEventTimeSeconds(25, 2.34);
+    ms.addNoteEventAtTime(248, 1, true);
+    ms.addNoteEventAtTime(252, 2, true);
+    ms.setEventTimeSeconds(251, 2.34);
     times = ms.getEventTimes();
-    expected = {25};
+    expected = {250};
     REQUIRE(times == expected);
-    double seconds = ms.getEventTimeInSeconds(24);
+    double seconds = ms.getEventTimeInSeconds(240);
     REQUIRE(seconds == 0.0);
-    seconds = ms.getEventTimeInSeconds(25);
+    seconds = ms.getEventTimeInSeconds(251);
     REQUIRE(seconds == 2.34);
 
-    ms.addNoteEventAtTime(30, 2, false);
-    ms.setEventTimeSeconds(30, 3.34);
+    ms.addNoteEventAtTime(301, 2, false);
+    ms.setEventTimeSeconds(299, 3.34);
     // This one should be a no-op since time 31 does not exist
-    ms.setEventTimeSeconds(31, 3.35);
-    ms.addNoteEventAtTime(38, 88, true);
-    ms.addNoteEventAtTime(27, 42, true);
+    ms.setEventTimeSeconds(310, 3.35);
+    ms.addNoteEventAtTime(381, 88, true);
+    ms.addNoteEventAtTime(270, 42, true);
     times = ms.getEventTimes();
-    expected = {25, 27, 30, 38};
+    expected = {250, 270, 300, 380};
     REQUIRE(times == expected);
 
     ms.clear();
     times = ms.getEventTimes();
     REQUIRE(times.size() == 0);
-    ms.addNoteEventAtTime(57, 42, true);
+    ms.addNoteEventAtTime(570, 42, true);
     times = ms.getEventTimes();
-    expected = {57};
+    expected = {570};
     REQUIRE(times == expected);
 
 }

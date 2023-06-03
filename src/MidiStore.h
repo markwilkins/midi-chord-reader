@@ -24,7 +24,24 @@ using namespace std;
 class MidiStore 
 {
 public:
-    //==============================================================================
+    // Current known version of the midi state info that is potentially saved/restored. The idea
+    // is that if I need to make a breaking change to the store, then I can bump this up and an
+    // older version of the plugin won't load the newer saved state. Also, it provides a mechanism
+    // to know if the saved (restored) state is recognized at all.
+    static const int currentVersion = 1;
+
+    // Some of the property names for the value tree state. I've been out of C++ dev for a while.
+    // I imagine there is a best (at least better) practice for this. 
+    // These should maybe be created as juce::Identifier values, but the bulk of the props in the
+    // usage are going to be dynamically created, so I'm not sure I see the value in that.
+    inline static const char* midiChordsVersionProp = "midiChordsVersion";
+    inline static const char* eventTimeInSecondsProp = "eventTimeInSeconds";
+    inline static const char* eventTimeProp = "eventTime";
+    inline static const char* quantizationValueProp = "quantizationValue";
+
+    
+
+
     MidiStore();
     ~MidiStore();
     bool hasData();
@@ -37,6 +54,7 @@ public:
     vector<int> getAllNotesOnAtTime(int64 startTime, int64 endTime);
     double getEventTimeInSeconds(int64 time);
     vector<int64> getEventTimes();
+    bool replaceState(ValueTree &newState);
     void clear();
     void allowStateChange(bool allow) {allowDataRecording = allow;}
     bool getRecordingState() {return allowDataRecording;}
@@ -49,6 +67,11 @@ public:
 
     void setIsPlaying(bool playing) {isPlaying = playing;}
     bool getIsPlaying() {return isPlaying;}
+
+    ValueTree& getState() {return this->chordState;}
+
+    int getQuantizationValue();
+    void setQuantizationValue(int q);
 
 
 private:
@@ -76,10 +99,17 @@ private:
     // If we know the max stored, then this helps us decide if we need to insert in tne middle.
     int64 maxTimeStored = 0;
 
+    Identifier noteIdentFromInt(int note);
+    int64 quantizeEventTime(int64 time);
+
     Identifier notesAtIdent(int64 time);
-    bool stringToInt(String str, int *value);
+    bool noteIdentToInt(String str, int *value);
     ValueTree ensureNoteEventAtTime(int64 time);
 
-    juce::ValueTree *trackData;
+    int64 findMaxTime();
+
+    // the bulk of the data is stored in this value tree. It, effectively, represents the entire
+    // state of the plugin (mostly the midi notes that have been played in the track)
+    juce::ValueTree chordState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiStore)
 };
