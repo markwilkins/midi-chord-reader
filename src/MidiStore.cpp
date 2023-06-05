@@ -10,6 +10,7 @@
 
 
 #include "MidiStore.h"
+#include "ChordName.h"
 
 using namespace juce;
 using namespace std;
@@ -81,7 +82,8 @@ bool MidiStore::replaceState(ValueTree &newState)
         DBG("Cannot load saved state. It is from a newer version of the plugin. Version: " + to_string(version));
         return false;
     }
-    chordState = newState;
+    this->chordState = newState;
+    this->isViewUpToDate = false;
     return true;
 }
 
@@ -114,7 +116,14 @@ void MidiStore::addNoteEventAtTime(int64 time, int note, bool isOn)
 
     // Store the note with the identifier (the label) being the note number and the value being bool on/off
     Identifier noteProp = noteIdentFromInt(note);
-    child.setProperty(noteProp, isOn, nullptr);
+    // In order to know if modifications were made (so we know if static view is out in sync), check to see if value
+    // will be changing
+    juce::var varOn = isOn;
+    if (!child.hasProperty(noteProp) || child.getProperty(noteProp) != varOn)
+    {
+        child.setProperty(noteProp, varOn, nullptr);
+        this->isViewUpToDate = false;
+    }
 }
 
 
@@ -144,12 +153,21 @@ int64 MidiStore::quantizeEventTime(int64 time)
  */
 void MidiStore::setEventTimeSeconds(int64 time, double seconds) 
 {
+    if (!allowDataRecording) 
+        return;
     time = this->quantizeEventTime(time);
     Identifier timeProp = notesAtIdent(time);
     const ScopedLock lock(storeLock);
     ValueTree eventTree = chordState.getChildWithName(timeProp);
     if (eventTree.isValid()) 
-        eventTree.setProperty(eventTimeInSecondsProp, seconds, nullptr);
+    {
+        juce::var varSeconds = seconds;
+        if (!eventTree.hasProperty(eventTimeInSecondsProp) || eventTree.getProperty(eventTimeInSecondsProp) != varSeconds)
+        {
+            eventTree.setProperty(eventTimeInSecondsProp, varSeconds, nullptr);
+            this->isViewUpToDate = false;
+        }
+    }
 }
 
 /**
@@ -269,7 +287,7 @@ vector<int> MidiStore::getNoteOnEventsAtTime(int64 time)
 vector<int> MidiStore::getAllNotesOnAtTime(int64 startTime, int64 endTime)
 {
     const ScopedLock lock(storeLock);
-    SortedSet<int> notes;
+    set<int> notes;
 
     startTime = this->quantizeEventTime(startTime);
     endTime = this->quantizeEventTime(endTime);
@@ -286,27 +304,40 @@ vector<int> MidiStore::getAllNotesOnAtTime(int64 startTime, int64 endTime)
             if (eventTime > endTime)
                 break;
 
-            Identifier noteIdent = child.getPropertyName(i);
-            string eventStr = noteIdent.toString().toStdString();
-            int note;
-            // If this is not an integer, it is not a note event. Skip it in that case
-            if (!noteIdentToInt(eventStr, &note))
-                continue;
-
-            bool isOn = child.getProperty(noteIdent);
-            if (isOn)
-                notes.add(note);
-            else
-                notes.removeValue(note);
+            updateCurrentlyOn(child, notes, i);
         }
     }
 
-    vector<int> returnVal;
-    for (int i = 0; i < notes.size(); i++)
-        returnVal.push_back(notes[i]);
+    vector<int> returnVal(notes.size());
+    copy(notes.begin(), notes.end(), returnVal.begin());
 
     return returnVal;
 }
+
+/**
+ * @brief Add/delete the a note from the chidl tree to the set of notes that is current "on"
+ * 
+ * @param ValueTree childEvents   value tree containing note on/off events
+ * @param set<int>  notes         update this set accordingly 
+ * @param int       propIndex     The index of the property of interest
+ */
+void MidiStore::updateCurrentlyOn(ValueTree &childEvents, set<int> &notes, int propIndex)
+{
+    Identifier noteIdent = childEvents.getPropertyName(propIndex);
+    string eventStr = noteIdent.toString().toStdString();
+    int note;
+    // If this is not an integer, it is not a note event. Skip it in that case
+    if (!noteIdentToInt(eventStr, &note))
+        return;
+
+    bool isOn = childEvents.getProperty(noteIdent);
+    if (isOn)
+        notes.insert(note);
+    else
+        notes.erase(note);
+
+}
+
 
 /**
  * @brief Retrieve the time (in seconds) associated with this event
@@ -433,4 +464,126 @@ Identifier MidiStore::notesAtIdent(int64 time)
     oss << "notesat:" << time;
     Identifier timeProp(oss.str());
     return timeProp;
+}
+
+
+/**
+ * @brief Create the simple (efficient) static view of the chords for repeated use
+ * 
+ * @return vector <pair<float, string>> 
+ */
+vector <pair<float, string>> MidiStore::createStaticView()
+{
+    // I *think* that this lock held here will be the most "expensive" of all the operations. May need to rethink
+    // how this is done. This operation is O(n) without a lot of cost involved (perhaps the chord naming is most costly?)
+    // It might be more efficient to get the lock and then make a copy of the chordState tree, unlock, build up the
+    // chord set, then lock again and replace the static view?
+    const ScopedLock lock(storeLock);
+    set<int> notes;
+    double prevTime = 0.0;
+    string prevChord = "";
+    ChordName cn;
+    vector<pair<float, string>> newStaticView;
+
+    for (ValueTree::Iterator events = chordState.begin(); events != chordState.end(); ++events)
+    {
+        ValueTree child = *events;
+        double eventTimeInSeconds = child.getProperty(eventTimeInSecondsProp);
+
+        // sanity check on the expected sortedness of the value tree events
+        jassert(eventTimeInSeconds >= prevTime);
+        prevTime = eventTimeInSeconds;
+
+        for (int i = 0; i < child.getNumProperties(); ++i)
+        {
+            updateCurrentlyOn(child, notes, i);
+        }
+
+        vector<int> currentChord(notes.size());
+        copy(notes.begin(), notes.end(), currentChord.begin());
+        string newChord = cn.nameChord(currentChord);
+        if (newChord != prevChord && newChord != "")
+        {
+            newStaticView.push_back({eventTimeInSeconds, newChord});
+        }
+        prevChord = newChord;
+
+    }
+
+    return newStaticView;
+}
+
+
+/**
+ * @brief Update the "efficient" static view of the set of chords represented by chordState
+ * This rebuilds it from scratch each time. The assumption (possibly a poor one) is that this
+ * rebuild will be relatively infrequent.
+ * If this assumption proves to be majorly bad and updates are going to be frequent, then believe it
+ * will be necessary to figure out how to update this static view selectively and efficiently. 
+ * It is a bit if a tricky problem ... but certainly solvable. If, for example, a new midi note is
+ * added at time T, then 
+ */
+void MidiStore::updateStaticView()
+{
+    vector<pair<float, string>> newStaticView;
+    newStaticView = createStaticView();
+
+    const ScopedLock lock(viewLock);
+    this->staticView = newStaticView;
+}
+
+
+/**
+ * @brief Update the efficient static view of the chords if it is out of date
+ * This puts a limit on the frequency of updates. Currently hard coded at once per second.
+ * Maybe need to make this controllable via the interface.
+ */
+void MidiStore::updateStaticViewIfOutOfDate()
+{
+    // if it appears to be up-to-date, don't do anything
+    if (!this->isViewUpToDate) 
+    {
+        int64 curTime = juce::Time::currentTimeMillis();
+        // otherwise do an update only at most once per second
+        if (curTime - this->lastViewUpdateTime > 1000)
+        {
+            DBG("Updating static view at time " + to_string(curTime));
+            this->updateStaticView();
+            this->lastViewUpdateTime = curTime;  // yeah ... not entirely accurate but close enough
+            this->isViewUpToDate = true;
+        }
+    }
+}
+
+
+/**
+ * @brief Retrieve a vector of time,chord pairs that are in the given window of time (in seconds).
+ * This retrieves the data from the static view, which is updated intermittently. It is not guaranteed
+ * to match the chordState ... but it should always be very close
+ * 
+ * @param viewWindow 
+ * @return vector<pair<float, string>> 
+ */
+vector<pair<float, string>> MidiStore::getChordsInWindow(pair<float, float> viewWindow)
+{
+    const ScopedLock lock(viewLock);
+
+    // Find the lower end
+    float viewStart = viewWindow.first;
+    float viewEnd = viewWindow.second;
+
+    pair<float, string> p(viewStart, "");
+    vector<pair<float, string>> chords;
+    auto curChord = std::lower_bound(this->staticView.begin(), this->staticView.end(), p);
+    for (; curChord != this->staticView.end(); ++curChord)
+    {
+        if (curChord->first > viewEnd)
+            // past end of chords that fit in the window
+            break;
+        chords.push_back({curChord->first, curChord->second});
+    }
+
+    this->viewWindowChordCount = static_cast<int>(chords.size());
+
+    return chords;
 }

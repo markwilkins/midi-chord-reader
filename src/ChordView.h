@@ -38,7 +38,7 @@ public:
 
 private:
     ChordClipper chordClipper;
-    void drawChords(map<float, string> chords, juce::Graphics &g);
+    void drawChords(vector<pair<float, string>> chords, juce::Graphics &g);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordView)
 };

@@ -57,14 +57,22 @@ public:
     bool hasData();
     void setName(juce::String name);
     String getName();
+
+    // These are the methods that update state in the chord view
+    // -------------------------
     void addNoteEventAtTime(int64 time, int note, bool isOn);
     void setEventTimeSeconds(int64 time, double seconds);
+    bool replaceState(ValueTree &newState);
+    // -------------------------
 
+    void updateStaticView();
+    void updateStaticViewIfOutOfDate();
     vector<int> getNoteOnEventsAtTime(int64 time);
     vector<int> getAllNotesOnAtTime(int64 startTime, int64 endTime);
     double getEventTimeInSeconds(int64 time);
     vector<int64> getEventTimes();
-    bool replaceState(ValueTree &newState);
+    vector<pair<float, string>> getChordsInWindow(pair<float, float> viewWindow);
+    int getViewWindowChordCount() {return viewWindowChordCount;}
     void clear();
     void allowStateChange(bool allow) {allowDataRecording = allow;}
     bool getRecordingState() {return allowDataRecording;}
@@ -83,11 +91,23 @@ public:
     int getQuantizationValue();
     void setQuantizationValue(int q);
 
+    // For testing ... Ideally I would mock the time function for this; this is a cheat but still a good test
+    void setLastViewUpdateTime(int64 time) {this->lastViewUpdateTime = time;}
 
 private:
     // Critical section for concurrent access. The editor will be reading it. processor updates it
     CriticalSection storeLock;
+    // This is a lock on the static view that is used for the common usages of viewing chords
+    CriticalSection viewLock;
+    // Is the static view of the chords up to date?
+    bool isViewUpToDate = false;
+    int64 lastViewUpdateTime = 0;
+    int viewWindowChordCount = 0;
+    
+    vector<pair<float, string>> staticView;
     // If this is true, then save state changes. Otherwise, don't
+    // mlwtbd - I think I want this false by default for typical usage ... or maybe it just needs to be stored with the
+    // settings ... as false, it causes test failures, though
     bool allowDataRecording = true;
     // flag indicating if we think playback is occuring
     bool isPlaying = false;
@@ -109,6 +129,8 @@ private:
     // If we know the max stored, then this helps us decide if we need to insert in tne middle.
     int64 maxTimeStored = 0;
 
+    vector <pair<float, string>> createStaticView();
+    void updateCurrentlyOn(ValueTree &childEvents, set<int> &notes, int propIndex);
     Identifier noteIdentFromInt(int note);
     int64 quantizeEventTime(int64 time);
 

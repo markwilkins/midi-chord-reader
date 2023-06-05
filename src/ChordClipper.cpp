@@ -44,31 +44,24 @@ void ChordClipper::updateCurrentPosition(int msSinceLastUpdate)
  * floating point time in seconds is the time relative to the window. (e.g., where 0 is the left-most
  * side of the window)
  * 
- * @return map<float, string> 
+ * @return vector<pair<float, string>>
  */
-map<float, string> ChordClipper::getChordsToDisplay() 
+vector<pair<float, string>> ChordClipper::getChordsToDisplay() 
 {
     // Compute the view window for the chords of interest
     pair<float, float> viewWindow = getViewWindowSize();
-    map<float, string> chords;
-    ChordName cn;
+    vector<pair<float, string>> chords;
+    float offset = viewWindow.first;
 
-    vector<int64> eventTimes = midiState.getEventTimes();
-    for (vector<int64>::iterator i = eventTimes.begin(); i != eventTimes.end(); ++i) 
-    {
-        float eventSeconds = static_cast<float>(midiState.getEventTimeInSeconds(*i));
-        float relativePosition;
-        if (isEventInWindow(viewWindow, eventSeconds, relativePosition))
-        {
-            vector<int> itNotes = midiState.getAllNotesOnAtTime(0, *i);
-            if (itNotes.size() > 0)
-            {
-                string chord = cn.nameChord(itNotes);
-                chords.insert({relativePosition, chord});
-            }
+    viewWindow.first -= 2.0f;
+    viewWindow.second += 2.0f;
+    chords = midiState.getChordsInWindow(viewWindow);
+    // need to offset the values to the window. If the window is 50 to 70, and we have events
+    // at 55 and 56, then we want to change them to be 5 and 6 respectively (make their offsets
+    // be relative to the window)
+    for (auto &i : chords) 
+        i.first -= offset;
 
-        }
-    }
     return chords;
 }
 

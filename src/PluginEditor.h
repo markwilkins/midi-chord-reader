@@ -36,7 +36,7 @@ private:
 
     juce::Label currentChords;
     juce::Label lastTimeStamp;
-    juce::Label lastChordSeen;
+    juce::Label debugInfo1;
     OptionsComponent options;
     ChordView chordView;
 
