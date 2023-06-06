@@ -259,6 +259,123 @@ TEST_CASE("notes on random", "storage")
     REQUIRE(notes == expected);
 }
 
+TEST_CASE("view window", "storage")
+{
+    struct event
+    {
+        int64 time;
+        double seconds;
+        int note;
+        bool onoff;
+    };
+    MidiStore ms;
+    std::vector<event> events;
+    vector<pair<float, string>> chords;
+    vector<pair<float, string>> expected;
+
+    ms.setQuantizationValue(1);
+    // the seconds vs event time values do not correlate to reality, but keeping them close here makes test understanding easier
+    events = {
+        // C
+        {10, 10.1, 60, true},
+        {15, 15.2, 64, true},
+        {20, 20.3, 67, true},
+        // {30, 30.4, 60, false},
+        {30, 30.4, 64, false},
+        {30, 30.4, 67, false},
+        // F
+        {30, 30.4, 60, true},
+        {30, 30.4, 65, true},
+        {30, 30.4, 69, true},
+        // change it to Dm
+        {50, 50.5, 62, true},
+        {50, 50.5, 60, false}};
+
+    // Just to make it more interesting, shuffle it before adding to ensure that
+    // it is treated consistently. Note that the note off for 60 at time 20 is commented out
+    // above. If that is left in and it is added AFTER the the "subsequent" on event, then
+    // the MidiStore code treats it as "off" since last event wins. I'm not entirely sure
+    // what happens in the ProcessAudio callback for situations like that. I'm not sure
+    // it is actually possible in a midi track to have a note end and the same note start
+    // at exactly the same time. If so ... then ... well I'm still not sure what the result is
+    // supposed to be.
+    std::shuffle(events.begin(), events.end(), std::random_device());
+
+    for (std::vector<event>::iterator ev = events.begin(); ev != events.end(); ++ev)
+    {
+        ms.addNoteEventAtTime(ev->time, ev->note, ev->onoff);
+        ms.setEventTimeSeconds(ev->time, ev->seconds);
+    }
+
+    ms.updateStaticView();
+
+    chords = ms.getChordsInWindow({7.1, 8.1});
+    REQUIRE(chords.size() == 0);
+
+    chords = ms.getChordsInWindow({10.1, 10.1});
+    expected = {{10.1, "C"}};
+    REQUIRE(chords == expected);
+
+    // The chord at the end of the arpeggio should still be C ... only one total should be in the set
+    chords = ms.getChordsInWindow({8.0, 20.3});
+    expected = {{10.1, "C"}};
+    REQUIRE(chords == expected);
+
+    chords = ms.getChordsInWindow({29.0, 32.3});
+    expected = {{30.4, "F/C"}};
+    REQUIRE(chords == expected);
+
+    chords = ms.getChordsInWindow({50.5, 51.3});
+    expected = {{50.5, "Dmin"}};
+    REQUIRE(chords == expected);
+
+    chords = ms.getChordsInWindow({28.1, 51.3});
+    expected = {{30.4, "F/C"}, {50.5, "Dmin"}};
+    REQUIRE(chords == expected);
+    chords = ms.getChordsInWindow({10.1, 51.3});
+    expected = {{10.1, "C"}, {30.4, "F/C"}, {50.5, "Dmin"}};
+    REQUIRE(chords == expected);
+
+    chords = ms.getChordsInWindow({50.6, 100.1});
+    REQUIRE(chords.size() == 0);
+
+}
+
+// verify that the view only gets updated "as needed" and not terribly often
+TEST_CASE("view update", "storage")
+{
+    MidiStore ms;
+    vector<pair<float, string>> chords;
+    vector<pair<float, string>> expected;
+    ms.setQuantizationValue(1);
+
+    ms.addNoteEventAtTime(1000, 12, true); 
+    ms.setEventTimeSeconds(1000, 10.0);
+    // This should always update since the initial value of "last update" is 0
+    ms.updateStaticViewIfOutOfDate();
+    chords = ms.getChordsInWindow({10.0, 10.0});
+    expected = {{10.0, "C"}};
+    REQUIRE(chords == expected);
+
+    ms.addNoteEventAtTime(1000, 15, true); 
+    // Make sure the "last update" is in the future so this should not update anything
+    int64 curTime = juce::Time::currentTimeMillis();
+    // If you step through this in the debugger and take longer than 30 seconds, this will fail
+    ms.setLastViewUpdateTime(curTime + 30000);
+    ms.updateStaticViewIfOutOfDate();
+    chords = ms.getChordsInWindow({10.0, 10.0});
+    expected = {{10.0, "C"}};
+    REQUIRE(chords == expected);
+
+    // make the last update look like it was at least 1 second in the past
+    ms.setLastViewUpdateTime(curTime - 1001);
+    ms.updateStaticViewIfOutOfDate();
+    chords = ms.getChordsInWindow({10.0, 10.0});
+    expected = {{10.0, "Cmin"}};
+    REQUIRE(chords == expected);
+}
+
+
 TEST_CASE("get event times", "storage") 
 {
     MidiStore ms;
@@ -298,4 +415,40 @@ TEST_CASE("get event times", "storage")
     expected = {570};
     REQUIRE(times == expected);
 
+}
+
+
+// Test temp stuff ... figuring out how sorted vector of pairs works
+TEST_CASE("tmp", "storage")
+{
+    vector<pair<float, string>> v;
+    pair<float, string> p;
+    v.push_back({4.5, "a"});
+    v.push_back({3.3, "b"});
+    v.push_back({2.3, "c"});
+    v.push_back({1.3, "d"});
+    std::sort(v.begin(), v.end());
+    for (auto i: v) 
+    {
+        DBG("val: " + to_string(i.first) + " " + i.second);
+    }
+
+    p = {2.5, ""};
+    auto it = std::lower_bound(
+        v.begin(),
+        v.end(),
+        p);
+
+    for (; it != v.end(); ++it)
+    {
+        DBG("val: " + to_string(it->first) + " " + it->second);
+    }
+
+    juce::ValueTree v1("one");
+    juce::ValueTree v2("two");
+    v1.setProperty("p1", "v1value", nullptr);
+    v2 = v1.createCopy();
+    v2.setProperty("p1", "v2value", nullptr);
+    REQUIRE(v2.getProperty("p1") == "v2value");
+    REQUIRE(v1.getProperty("p1") == "v1value");
 }

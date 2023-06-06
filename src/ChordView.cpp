@@ -41,7 +41,7 @@ void ChordView::paint(juce::Graphics &g)
 
     g.setColour(getLookAndFeel().findColour(juce::Slider::thumbColourId));
     // map<float, string> chords = this->getChordsToDisplay();
-    map<float, string> chords = chordClipper.getChordsToDisplay();
+    vector<pair<float, string>> chords = chordClipper.getChordsToDisplay();
     this->drawChords(chords, g);
 }
 
@@ -52,16 +52,16 @@ void ChordView::paint(juce::Graphics &g)
  * @param chords   map of chords by time relative to the window
  * @param g 
  */
-void ChordView::drawChords(map<float, string> chords, juce::Graphics &g)
+void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g)
 {
-    map<float, string>::iterator it;
+    // map<float, string>::iterator it;
     auto area = getLocalBounds();
     juce::Rectangle<float> textBox;
     textBox = area.toFloat();
     g.setFont(25.0);
     float ratio = textBox.getWidth() / chordClipper.getViewWidthInSeconds();
 
-    for (it = chords.begin(); it != chords.end(); ++it)
+    for (auto it = chords.begin(); it != chords.end(); ++it)
     {
         float leftPos = it->first * ratio;
         textBox.setLeft(leftPos);

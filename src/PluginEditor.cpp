@@ -24,16 +24,16 @@ MidiChordsAudioProcessorEditor::MidiChordsAudioProcessorEditor (MidiChordsAudioP
 
 
     lastTimeStamp.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
-    lastChordSeen.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
+    debugInfo1.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
     currentChords.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
 
     addAndMakeVisible(&lastTimeStamp);
-    addAndMakeVisible(&lastChordSeen);
+    addAndMakeVisible(&debugInfo1);
     addAndMakeVisible(&currentChords);
     addAndMakeVisible(&options);
     addAndMakeVisible(&chordView);
 
-    Timer::startTimer(1000);
+    Timer::startTimer(500);
 }
 
 MidiChordsAudioProcessorEditor::~MidiChordsAudioProcessorEditor()
@@ -55,11 +55,12 @@ void MidiChordsAudioProcessorEditor::timerCallback()
     repaint();
 
     std::string info = "";
+
     MidiStore *ms = audioProcessor.getReferenceTrack();
-    vector<int> currentNotes = ms->getAllNotesOnAtTime(0, audioProcessor.lastEventTimestamp);
-    ChordName cn;
-    string lastChord = cn.nameChord(currentNotes);
-    lastChordSeen.setText("latest Chord: " + lastChord, juce::NotificationType::sendNotification);
+    ms->updateStaticViewIfOutOfDate();
+
+    debugInfo1.setText("visible chord count: " + std::to_string(ms->getViewWindowChordCount()), juce::NotificationType::sendNotification);
+    /*
     std::vector<int64> eventTimes = ms->getEventTimes();
     for (std::vector<int64>::iterator i = eventTimes.begin(); i != eventTimes.end(); ++i) 
     {
@@ -75,6 +76,7 @@ void MidiChordsAudioProcessorEditor::timerCallback()
         }
     }
     currentChords.setText("all chords: " + info, juce::NotificationType::sendNotification);
+    */
 
 
 }
@@ -96,7 +98,7 @@ void MidiChordsAudioProcessorEditor::resized()
 {
     // sets the position and size of the slider with arguments (x, y, width, height)
     lastTimeStamp.setBounds(10, 10, 100, 30);
-    lastChordSeen.setBounds(10, 40, 100, 30);
+    debugInfo1.setBounds(10, 40, getWidth() - 10, 30);
     currentChords.setBounds(10, 70, getWidth() - 10, 60);
     options.setBounds(0, getHeight() - 100, getWidth(), 100);
     chordView.setBounds(0, getHeight() - 200, getWidth(), 100);

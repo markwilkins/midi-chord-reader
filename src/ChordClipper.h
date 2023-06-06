@@ -25,7 +25,7 @@ class ChordClipper
 {
 public:
     ChordClipper(MidiStore&);
-    map<float, string> getChordsToDisplay();
+    vector<pair<float, string>> getChordsToDisplay();
     void updateCurrentPosition(int msSinceLastUpdate);
 
     float getViewWidthInSeconds() {return viewWidthInSeconds;}

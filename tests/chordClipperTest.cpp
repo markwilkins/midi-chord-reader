@@ -10,7 +10,7 @@ TEST_CASE("chord view empty", "chordview")
     MidiStore ms;
     ms.setQuantizationValue(1);
     ChordClipper cp(ms);
-    map<float, string> display;
+    vector<pair<float, string>> display;
 
     display = cp.getChordsToDisplay();
     REQUIRE(display.size() == 0);
@@ -28,20 +28,25 @@ TEST_CASE("chord view window", "chordview")
     ms.addNoteEventAtTime(50, 12, true);
     ms.setEventTimeSeconds(50, 5.0);
     ms.addNoteEventAtTime(60, 12, false);
+    ms.setEventTimeSeconds(60, 5.5);
 
     // F
     ms.addNoteEventAtTime(100, 17, true);
     ms.setEventTimeSeconds(100, 15.0);
     ms.addNoteEventAtTime(110, 17, false);
+    ms.setEventTimeSeconds(110, 15.5);
 
     // G
     ms.addNoteEventAtTime(200, 19, true);
     ms.setEventTimeSeconds(200, 30.0);
     ms.addNoteEventAtTime(210, 19, false);
+    ms.setEventTimeSeconds(210, 32.0);
+
+    ms.updateStaticViewIfOutOfDate();
 
     ChordClipper cp(ms);
-    map<float, string> chords;
-    map<float, string> expected;
+    vector<pair<float, string>> chords;
+    vector<pair<float, string>> expected;
 
     chords = cp.getChordsToDisplay();
     // The expected chords are offset by "current note position" ... the default is to have the currently
