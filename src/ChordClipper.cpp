@@ -15,23 +15,43 @@ using namespace std;
 
 ChordClipper::ChordClipper(MidiStore &ms) : midiState(ms)
 {
+    // Extract state info
+    // ms.getPlayHeadPosition ...
 }
 
+/**
+ * @brief Keep the current logic playhead position up to date. 
+ * This is expected to be called on a constant timer so it can update the info that the view window
+ * uses for knowing which chords to display.
+ * 
+ * @param msSinceLastUpdate   milliseconds since the last time this was called
+ */
 void ChordClipper::updateCurrentPosition(int msSinceLastUpdate)
 {
+    // If we have an update that represents the "true" position, then use that. This gets set during
+    // callbacks by the plugin processor. This can happen during playback when it sends the next
+    // bit of playback info to us. But even outside of playback, a click in the track by the user to
+    // move the playhead position results in a call ... sometimes. That is cool because it keeps
+    // the window up to date with respect to what the user is looking at in the track. But I notice
+    // that it does not always update if the track that this plugin is on is not the current one.
     float lastSeenPosition = static_cast<float>(midiState.getLastEventTimeInSeconds());
     if (lastSeenPosition != this->mostRecentPlayPosition)
     {
+        // We have new position info from the DAW. Use it
         this->mostRecentPlayPosition = lastSeenPosition;
-        this->estimatedPlayPosition = this->mostRecentPlayPosition;
+        this->estimatedPlayPosition = lastSeenPosition;
     }
     else
     {
-        // This is not an atomic add ... but this method is the only one updating this value and I *assume* (yeah yeah) that
-        // update() would not be called concurrently on multiple threads. Worst case is the read and add would be out of
-        // sync and basically reset it to an older value. Next time an actual playhead event occurs, it will be fixed.
+        // We do not have new "official" position info, so just keep moving the window along based on
+        // the amount of elapsed time. If we are not currently in playback, then don't change the position.
         if (midiState.getIsPlaying())
+        {
+            // This is not an atomic add ... but this method is the only one updating this value and I *assume* (yeah yeah) that
+            // update() would not be called concurrently on multiple threads. Worst case is the read and add would be out of
+            // sync and basically reset it to an older value. Next time an actual playhead event occurs, it would be fixed.
             this->estimatedPlayPosition = this->estimatedPlayPosition + static_cast<float>(msSinceLastUpdate / 1000.0);
+        }
     }
 
 }
@@ -75,10 +95,33 @@ pair<float, float> ChordClipper::getViewWindowSize()
     float start;
     float end;
 
-    start = this->estimatedPlayPosition - this->currentNotePosition;
-    end = start + this->viewWidthInSeconds;
+    start = this->estimatedPlayPosition - this->getCurrentNotePosition();
+    end = start + this->getViewWidthInSeconds();
     return {start, end};
 }
+
+// Reference position of "now" in the view port. This is where in the current position of the playhead resides.
+// In other words, if window width represents 20 seconds and this is value 5, then the currently playing note (chord)
+// will be at 25% from the left.
+float ChordClipper::getCurrentNotePosition()
+{
+    // in percent
+    float position = midiState.getPlayHeadPosition();
+    float positionInSeconds = static_cast<float>(this->getViewWidthInSeconds() * (position / 100.0));
+    return positionInSeconds;
+}
+
+
+/**
+ * @brief Retrieve the stored value of the view window
+ * 
+ * @return float  
+ */
+float ChordClipper::getViewWidthInSeconds()
+{
+    return midiState.getTimeWidth();
+}
+
 
 /**
  * @brief Determine if the given event falls in the displayable window.
