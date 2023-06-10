@@ -48,6 +48,10 @@ public:
     inline static const char* eventTimeInSecondsProp = "eventTimeInSeconds";
     inline static const char* eventTimeProp = "eventTime";
     inline static const char* quantizationValueProp = "quantizationValue";
+    inline static const char* allowRecordingProp = "allowRecording";
+    // property with the position of the playhead in % (within the view window)
+    inline static const char* playHeadPositionProp = "playheadPosition";
+    inline static const char* viewWidthProp = "viewWidthProp";
 
     
 
@@ -65,6 +69,9 @@ public:
     bool replaceState(ValueTree &newState);
     // -------------------------
 
+    ValueTree& getState() {return this->chordState;}
+
+
     void updateStaticView();
     void updateStaticViewIfOutOfDate();
     vector<int> getNoteOnEventsAtTime(int64 time);
@@ -74,8 +81,14 @@ public:
     vector<pair<float, string>> getChordsInWindow(pair<float, float> viewWindow);
     int getViewWindowChordCount() {return viewWindowChordCount;}
     void clear();
-    void allowStateChange(bool allow) {allowDataRecording = allow;}
-    bool getRecordingState() {return allowDataRecording;}
+    void allowStateChange(bool allow);
+    void setPlayHeadPosition(float percentage);
+    float getPlayHeadPosition();
+
+    void setTimeWidth(float width);
+    float getTimeWidth();
+
+    bool getRecordingState() { return allowDataRecording; }
 
     // setters/getters for most recently seen event time
     void setLastEventTime(int64 time) {lastEventTime = time;}
@@ -85,8 +98,6 @@ public:
 
     void setIsPlaying(bool playing) {isPlaying = playing;}
     bool getIsPlaying() {return isPlaying;}
-
-    ValueTree& getState() {return this->chordState;}
 
     int getQuantizationValue();
     void setQuantizationValue(int q);
@@ -99,10 +110,16 @@ private:
     CriticalSection storeLock;
     // This is a lock on the static view that is used for the common usages of viewing chords
     CriticalSection viewLock;
+    // the bulk of the data is stored in this value tree. It, effectively, represents the entire
+    // state of the plugin (mostly the midi notes that have been played in the track)
+    juce::ValueTree chordState;
+
     // Is the static view of the chords up to date?
     bool isViewUpToDate = false;
     int64 lastViewUpdateTime = 0;
     int viewWindowChordCount = 0;
+
+    void refreshSettingsFromState();
     
     vector<pair<float, string>> staticView;
     // If this is true, then save state changes. Otherwise, don't
@@ -140,8 +157,5 @@ private:
 
     int64 findMaxTime();
 
-    // the bulk of the data is stored in this value tree. It, effectively, represents the entire
-    // state of the plugin (mostly the midi notes that have been played in the track)
-    juce::ValueTree chordState;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiStore)
 };

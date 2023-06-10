@@ -24,12 +24,21 @@ public:
 
     void resetClick();
 
+    void adjustPositionPlayhead(double value);
+    void adjustTimeWidth(double value);
+
     void recordingClick(bool state);
+
+    void refreshControlState();
 
 private:
     juce::GroupComponent propsPanel;
-    juce::TextButton resetChords;
-    juce::ToggleButton recordingOn;
+    juce::TextButton resetChordsButton;
+    juce::ToggleButton recordingOnToggle;
+    juce::Label playheadLabel;
+    juce::Slider positionOfPlayheadSlider;
+    juce::Label timeWidthLabel;
+    juce::Slider timeWidthSlider;
     void paint(juce::Graphics &g) override;
     MidiStore &midiState;
 

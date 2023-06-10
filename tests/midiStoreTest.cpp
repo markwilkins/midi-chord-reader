@@ -56,6 +56,40 @@ TEST_CASE("tree replacement", "storage")
     REQUIRE(notes.size() == 1);
 }
 
+TEST_CASE("refresh from state", "storage")
+{
+    MidiStore ms;
+    juce::ValueTree vtn("restored");
+    bool replaced;
+
+    ms.setQuantizationValue(1);
+    vtn.setProperty(ms.midiChordsVersionProp, ms.currentVersion, nullptr);
+    replaced = ms.replaceState(vtn);
+    REQUIRE(replaced == true);
+
+    ms.addNoteEventAtTime(100, 12, true);
+    vector<int> notes = ms.getNoteOnEventsAtTime(100);
+    REQUIRE(notes.size() == 1);
+
+    vtn.setProperty(ms.allowRecordingProp, true, nullptr);
+    replaced = ms.replaceState(vtn);
+    REQUIRE(replaced == true);
+
+    ms.addNoteEventAtTime(100, 14, true);
+    notes = ms.getNoteOnEventsAtTime(100);
+    REQUIRE(notes.size() == 2);
+
+    vtn.setProperty(ms.allowRecordingProp, false, nullptr);
+    replaced = ms.replaceState(vtn);
+    REQUIRE(replaced == true);
+
+    // This one shouldn't get added (the "newly loaded" state has that flag turned off)
+    ms.addNoteEventAtTime(100, 16, true);
+    notes = ms.getNoteOnEventsAtTime(100);
+    // so still 2 
+    REQUIRE(notes.size() == 2);
+}
+
 TEST_CASE("note storage basics", "storage")
 {
     MidiStore ms;
@@ -101,6 +135,28 @@ TEST_CASE("test state change flag", "storage")
     ms.addNoteEventAtTime(50, 15, true);
     notes = ms.getAllNotesOnAtTime(0, 200);
     REQUIRE(notes.size() == 1);
+}
+
+TEST_CASE("test time width prop", "storage")
+{
+    MidiStore ms;
+    float width;
+
+    // default value
+    width = ms.getTimeWidth();
+    REQUIRE(width == 20.0);
+
+    ms.setTimeWidth(35.0);
+    width = ms.getTimeWidth();
+    REQUIRE(width == 35.0);
+
+    // Verify it does the range checking
+    ms.setTimeWidth(135.0);
+    width = ms.getTimeWidth();
+    REQUIRE(width == 20.0);
+    ms.setTimeWidth(0.0);
+    width = ms.getTimeWidth();
+    REQUIRE(width == 20.0);
 
 }
 

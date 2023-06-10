@@ -28,8 +28,8 @@ public:
     vector<pair<float, string>> getChordsToDisplay();
     void updateCurrentPosition(int msSinceLastUpdate);
 
-    float getViewWidthInSeconds() {return viewWidthInSeconds;}
-    float getCurrentNotePosition() {return currentNotePosition;}
+    float getViewWidthInSeconds();
+    float getCurrentNotePosition();
 
 private:
 
@@ -42,12 +42,6 @@ private:
     // This represents where we believe the playhead to be. Tracking this value instead of pestering the audio processor
     // for actual playhead position constantly
     atomic<float> estimatedPlayPosition = 0.0;
-
-    float viewWidthInSeconds = 20.0;
-    // Reference position of "now" in the view port. This is where in the current position of the playhead resides.
-    // In other words, if window width represents 20 seconds and this is value 5, then the currently playing note (chord)
-    // will be at 25% from the left.
-    float currentNotePosition = 5.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordClipper)
 };

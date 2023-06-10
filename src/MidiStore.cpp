@@ -82,9 +82,95 @@ bool MidiStore::replaceState(ValueTree &newState)
         DBG("Cannot load saved state. It is from a newer version of the plugin. Version: " + to_string(version));
         return false;
     }
+    
     this->chordState = newState;
     this->isViewUpToDate = false;
+    refreshSettingsFromState();
     return true;
+}
+
+
+/**
+ * @brief Update the various plugin settings from the current state
+ * 
+ */
+void MidiStore::refreshSettingsFromState()
+{
+    if (chordState.hasProperty(allowRecordingProp))
+    {
+        bool allow = chordState.getProperty(allowRecordingProp);
+        this->allowDataRecording = allow;
+    }
+
+}
+
+/**
+ * @brief Are state changes (e.g., update of midi notes) allowed?
+ * Update the prop in the state as well so it gets saved by the DAW
+ * 
+ * @param bool allow 
+ */
+void MidiStore::allowStateChange(bool allow) 
+{
+    allowDataRecording = allow;
+    chordState.setProperty(allowRecordingProp, allow, nullptr);
+}
+
+/**
+ * @brief Store the relative playhead position in the state tree. This is the 
+ * line in the scrolling view that represents "now" 
+ * 
+ * @param float percentage A % value 1 to 99 (0 and 100 cause the line to be off screen)
+ */
+void MidiStore::setPlayHeadPosition(float percentage)
+{
+    chordState.setProperty(playHeadPositionProp, percentage, nullptr);
+}
+
+/**
+ * @brief Retrieve the location of playhead in the view window as a percentage
+ * 
+ * @return float  percentage
+ */
+float MidiStore::getPlayHeadPosition()
+{
+    float position = 25.0;
+    if (chordState.hasProperty(playHeadPositionProp))
+    {
+        float storedPosition = chordState.getProperty(playHeadPositionProp);
+        if (storedPosition >= 0.0 && storedPosition <= 100.0)
+            position = storedPosition;
+    }
+    return position;
+}
+
+/**
+ * @brief Store the width of the scrolling view window in seconds 
+ * 
+ * @param width  
+ */
+void MidiStore::setTimeWidth(float width)
+{
+    chordState.setProperty(viewWidthProp, width, nullptr);
+}
+
+/**
+ * @brief Retrieve the width (in seconds) of the view window
+ * 
+ * @return float 
+ */
+float MidiStore::getTimeWidth()
+{
+    // Until I start using this for real and playing live while watching the playback, I 
+    // am not sure what good values are. Default to 20 seconds and limit to 100 for now.
+    float width = 20.0;
+    if (chordState.hasProperty(viewWidthProp))
+    {
+        float storedWidth = chordState.getProperty(viewWidthProp);
+        if (storedWidth >= 1.0 && storedWidth <= 100.0)
+            width = storedWidth;
+    }
+    return width;
 }
 
 /**
@@ -95,6 +181,7 @@ void MidiStore::clear()
     const ScopedLock lock(storeLock);
     // Note - Intentionally ignoring the recordData state change flag on this
     chordState.removeAllChildren(nullptr);
+    this->isViewUpToDate = false;
 }
 
 /**
@@ -491,6 +578,12 @@ vector <pair<float, string>> MidiStore::createStaticView()
         double eventTimeInSeconds = child.getProperty(eventTimeInSecondsProp);
 
         // sanity check on the expected sortedness of the value tree events
+        // FIXME: what to do about this... I think it happens when playing back over the
+        // top of existing data. The slight shift I see in the int64 event times applies
+        // to the floating point seconds as well. If I do a straight through recording
+        // of the data (totally clean) then I do no thit this assert
+        //if (eventTimeInSeconds < prevTime) 
+        //    continue;
         jassert(eventTimeInSeconds >= prevTime);
         prevTime = eventTimeInSeconds;
 
@@ -505,8 +598,8 @@ vector <pair<float, string>> MidiStore::createStaticView()
         if (newChord != prevChord && newChord != "")
         {
             newStaticView.push_back({eventTimeInSeconds, newChord});
+            prevChord = newChord;
         }
-        prevChord = newChord;
 
     }
 
