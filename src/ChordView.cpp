@@ -18,7 +18,7 @@ using namespace juce;
 
 ChordView::ChordView(MidiStore &ms) : chordClipper(ms)
 {
-    setFramesPerSecond(60);
+    setFramesPerSecond(30);
 }
 
 
@@ -40,8 +40,7 @@ void ChordView::paint(juce::Graphics &g)
     g.drawVerticalLine(x, 0, getHeight());
 
     g.setColour(getLookAndFeel().findColour(juce::Slider::thumbColourId));
-    // map<float, string> chords = this->getChordsToDisplay();
-    vector<pair<float, string>> chords = chordClipper.getChordsToDisplay();
+    ChordVectorType chords = chordClipper.getChordsToDisplay();
     this->drawChords(chords, g);
 }
 

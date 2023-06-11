@@ -166,7 +166,7 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
             // mlwtbd: These two values were for helping me debug/understand. Probably will delete these two values.
             this->lastEventTime = metadata.samplePosition;
             this->lastEventTimestamp = messageEventTime;
-            DBG("Note on: " + message.getDescription() + " at time " + std::to_string(lastEventTime));
+            // DBG("Note on: " + message.getDescription() + " at time " + std::to_string(lastEventTime));
             referenceTrack.addNoteEventAtTime(messageEventTime, noteNumber, true);
             // mlwtbd - Store the current time in seconds that "might be" associated with this event.
             // However this value is the current position of the playhead ... and we are offsetting the
@@ -185,7 +185,7 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
             if (pos != currentNotes.end()) {
                 currentNotes.erase(pos);
             }
-            DBG("Note off: " + message.getDescription());
+            // DBG("Note off: " + message.getDescription());
             referenceTrack.addNoteEventAtTime(messageEventTime, noteNumber, false);
             referenceTrack.setEventTimeSeconds(messageEventTime, posOfBlock.second);
         }

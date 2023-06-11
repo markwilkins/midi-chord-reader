@@ -10,6 +10,7 @@
 
 #include "ChordName.h"
 #include "ChordClipper.h"
+#include "MidiChordsTypes.h"
 
 using namespace std;
 
@@ -66,11 +67,13 @@ void ChordClipper::updateCurrentPosition(int msSinceLastUpdate)
  * 
  * @return vector<pair<float, string>>
  */
-vector<pair<float, string>> ChordClipper::getChordsToDisplay() 
+ChordVectorType ChordClipper::getChordsToDisplay() 
 {
     // Compute the view window for the chords of interest
     pair<float, float> viewWindow = getViewWindowSize();
+    pair<float, float> newWindow;
     vector<pair<float, string>> chords;
+    vector<pair<float, string>> newChords;
     float offset = viewWindow.first;
 
     // TODO: efficiency change:
@@ -78,17 +81,105 @@ vector<pair<float, string>> ChordClipper::getChordsToDisplay()
     // just get new chords once every second perhaps (since we have the 2 second buffer). That way, if we already
     // have chords for time T 20 to 30 and then when we are asking for chords from 21 to 31, we should need only
     // to get the chords for time T 30 to 31 and just update the existing set.
-
     viewWindow.first -= 2.0f;
     viewWindow.second += 2.0f;
-    chords = midiState.getChordsInWindow(viewWindow);
+
+    // Compute the difference in current buffer and new buffer and update it accordingly
+    newWindow = computeNewWindowSize(viewWindow);
+    newChords = midiState.getChordsInWindow(newWindow);
+    constructDisplayedChords(viewWindow, newChords);
+
     // need to offset the values to the window. If the window is 50 to 70, and we have events
     // at 55 and 56, then we want to change them to be 5 and 6 respectively (make their offsets
     // be relative to the window)
+    chords = this->viewBuffer;
     for (auto &i : chords) 
         i.first -= offset;
 
     return chords;
+}
+
+void ChordClipper::constructDisplayedChords(ViewWindowType viewWindow, ChordVectorType newChords)
+{
+    if (!hasForwardOverlap(viewWindow))
+    {
+        this->viewBuffer = newChords;
+    }
+    else
+    {
+        // If any chords have dropped off the front (left side), remove them
+        for (ChordVectorType::iterator it = this->viewBuffer.begin(); it != this->viewBuffer.end(); )
+        {
+            if (it->first < viewWindow.first) 
+            {
+                it = this->viewBuffer.erase(it);
+            }
+            else
+            {
+                // Reached the end of ones to delete
+                break;
+            }
+        }
+
+        for (ChordVectorType::iterator it = newChords.begin(); it != newChords.end(); ++it)
+        {
+            DBG("Appending chord to end: " + it->second);
+        }
+
+        // add the new ones
+        this->viewBuffer.insert(viewBuffer.end(), newChords.begin(), newChords.end());
+    }
+
+    this->viewBufferSize = viewWindow;
+}
+
+
+/**
+ * @brief Compute the window size of the "new" window while scrolling forward
+ * 
+ * @param neededWindow     This is the desired end result window
+ * @return ViewWindowType 
+ */
+ViewWindowType ChordClipper::computeNewWindowSize(ViewWindowType neededWindow)
+{
+    if (hasForwardOverlap(neededWindow))
+    {
+        // All we need to retrieve is anything new between the end of our current buffer
+        // and the requested new end
+        return {this->viewBufferSize.second, neededWindow.second};
+    }
+    else 
+    {
+        // just do the full thing
+        return neededWindow;
+    }
+}
+
+/**
+ * @brief Determine if the new window overlaps the existing window in a forward moving direction
+ * 
+ * @param neededWindow 
+ * @return bool          true if there is overlap of the type we are interested in, false if not
+ */
+bool ChordClipper::hasForwardOverlap(ViewWindowType neededWindow)
+{
+    // Optimizing for forward playback. I could handle all possible overlaps and 
+    // compute the clipped parts for front/back of the window. But the one I care about
+    // is to make it efficient during playback; that's the only time it really matters.
+    // So make this as simple as possible: Just handle the case where it has moved
+    // forward and the rear of the needed window falls in the middle of our 
+    // existing buffer and the front is somewhere in front of that.
+    if (neededWindow.first > this->viewBufferSize.first && 
+        neededWindow.second > this->viewBufferSize.second &&
+        neededWindow.first < this->viewBufferSize.second)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
 }
 
 /**

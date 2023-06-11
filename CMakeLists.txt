@@ -56,7 +56,7 @@ juce_generate_juce_header(MidiChords)
 
 include_directories (
         src
-        build/_deps/juce-src/modules
+        # build/_deps/juce-src/modules
 )
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the
