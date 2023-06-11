@@ -10,6 +10,7 @@
 
 #pragma once
 #include "MidiStore.h"
+#include "MidiChordsTypes.h"
 
 using namespace std;
 
@@ -33,9 +34,15 @@ public:
 
 private:
 
+    pair<float, float> viewBufferSize;
+    vector<pair<float, string>> viewBuffer;
+
     MidiStore &midiState;
     pair<float, float> getViewWindowSize();
     bool isEventInWindow(pair<float, float> viewWindow, float eventSeconds, float &relativePosition);
+    pair<float, float> computeNewWindowSize(pair<float, float> neededWindow);
+    bool hasForwardOverlap(ViewWindowType neededWindow);
+    ChordVectorType constructDisplayedChords(ViewWindowType viewWindow, ChordVectorType newChords);
 
     // The time (in seconds) of the most recently seen track time
     float mostRecentPlayPosition = 0.0;
