@@ -65,10 +65,10 @@ public:
     int64 lastEventTimestamp = 0;
     std::unordered_set<juce::String> currentNotes;
 
-    MidiStore* getReferenceTrack() { return &referenceTrack; }
+    MidiStore* getMidiState() { return &midiState; }
 
 private:
-    MidiStore referenceTrack;
+    MidiStore midiState;
     pair<int64, double> currentPlayheadPosition();
 
     // variables for some of the pluginprocessor things I don't need yet

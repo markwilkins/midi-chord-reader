@@ -149,8 +149,7 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
 
     if (auto positionInfo = getPlayHead()->getPosition()) 
     {
-        //mlwtbd - this position info struct has lots of info ... might provide details for converting time event to seconds
-        this->referenceTrack.setIsPlaying(positionInfo->getIsPlaying());
+        this->midiState.setIsPlaying(positionInfo->getIsPlaying());
     }
 
     for (const auto metadata : midiMessages)
@@ -167,7 +166,7 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
             this->lastEventTime = metadata.samplePosition;
             this->lastEventTimestamp = messageEventTime;
             // DBG("Note on: " + message.getDescription() + " at time " + std::to_string(lastEventTime));
-            referenceTrack.addNoteEventAtTime(messageEventTime, noteNumber, true);
+            midiState.addNoteEventAtTime(messageEventTime, noteNumber, true);
             // mlwtbd - Store the current time in seconds that "might be" associated with this event.
             // However this value is the current position of the playhead ... and we are offsetting the
             // actual event time by the metadata.samplePosition. There is the concept of:
@@ -175,7 +174,7 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
             // context. Observation shows that the behavior is as desired. But not sure it will always
             // work that way. Need to keep an eye on it.
             // Maybe the samplesPerBlock from PrepareToPlay would give me that info?
-            referenceTrack.setEventTimeSeconds(messageEventTime, posOfBlock.second);
+            midiState.setEventTimeSeconds(messageEventTime, posOfBlock.second);
         }
         if (message.isNoteOff()) 
         {
@@ -186,8 +185,8 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
                 currentNotes.erase(pos);
             }
             // DBG("Note off: " + message.getDescription());
-            referenceTrack.addNoteEventAtTime(messageEventTime, noteNumber, false);
-            referenceTrack.setEventTimeSeconds(messageEventTime, posOfBlock.second);
+            midiState.addNoteEventAtTime(messageEventTime, noteNumber, false);
+            midiState.setEventTimeSeconds(messageEventTime, posOfBlock.second);
         }
         if (message.isMidiClock())
         {
@@ -237,12 +236,12 @@ pair<int64, double> MidiChordsAudioProcessor::currentPlayheadPosition()
             if (auto samplePos = position->getTimeInSamples())
             {
                 currentTime = *samplePos;
-                referenceTrack.setLastEventTime(currentTime);
+                midiState.setLastEventTime(currentTime);
             }
             if (auto seconds = position->getTimeInSeconds())
             {
                 timeInSeconds = *seconds;
-                referenceTrack.setLastEventTimeInSeconds(*seconds);
+                midiState.setLastEventTimeInSeconds(*seconds);
             }
         }
     }
@@ -258,7 +257,7 @@ bool MidiChordsAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* MidiChordsAudioProcessor::createEditor()
 {
-    return new MidiChordsAudioProcessorEditor (*this, referenceTrack);
+    return new MidiChordsAudioProcessorEditor (*this, midiState);
 }
 
 //==============================================================================
@@ -267,7 +266,7 @@ void MidiChordsAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
-    ValueTree &vt = this->referenceTrack.getState();
+    ValueTree &vt = this->midiState.getState();
     std::unique_ptr<juce::XmlElement> xml(vt.createXml());
     copyXmlToBinary(*xml, destData);
 }
@@ -281,7 +280,7 @@ void MidiChordsAudioProcessor::setStateInformation (const void* data, int sizeIn
     if (xmlState.get() != nullptr)
     {
         auto restored = juce::ValueTree::fromXml(*xmlState);
-        this->referenceTrack.replaceState(restored);
+        this->midiState.replaceState(restored);
     }
 }
 

@@ -75,7 +75,7 @@ void MidiChordsAudioProcessorEditor::timerCallback()
 
     std::string info = "";
 
-    MidiStore *ms = audioProcessor.getReferenceTrack();
+    MidiStore *ms = audioProcessor.getMidiState();
     ms->updateStaticViewIfOutOfDate();
 
     debugInfo1.setText("visible chord count: " + std::to_string(ms->getViewWindowChordCount()), juce::NotificationType::sendNotification);
