@@ -52,6 +52,7 @@ public:
     // property with the position of the playhead in % (within the view window)
     inline static const char* playHeadPositionProp = "playheadPosition";
     inline static const char* viewWidthProp = "viewWidthProp";
+    inline static const char* shortChordThresholdProp = "shortChordThresholdProp";
 
     
 
@@ -87,6 +88,8 @@ public:
 
     void setTimeWidth(float width);
     float getTimeWidth();
+    void setShortChordThreshold(float threshold);
+    float getShortChordThreshold();
 
     bool getRecordingState() { return allowDataRecording; }
 
@@ -120,7 +123,10 @@ private:
     int viewWindowChordCount = 0;
 
     void refreshSettingsFromState();
-    
+
+    void setStateProp(const char *propName, juce::var value);
+    float getStateFloatProp(const char *propName, float defaultValue, float min, float max);
+
     vector<pair<float, string>> staticView;
     // If this is true, then save state changes. Otherwise, don't
     // mlwtbd - I think I want this false by default for typical usage ... or maybe it just needs to be stored with the
@@ -147,6 +153,8 @@ private:
     int64 maxTimeStored = 0;
 
     vector <pair<float, string>> createStaticView();
+    vector<pair<float, string>> getChordsInWindowRaw(pair<float, float> viewWindow);
+    void removeShortChords(vector<pair<float, string>> &view);
     void updateCurrentlyOn(ValueTree &childEvents, set<int> &notes, int propIndex);
     Identifier noteIdentFromInt(int note);
     int64 quantizeEventTime(int64 time);

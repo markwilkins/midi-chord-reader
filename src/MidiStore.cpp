@@ -105,6 +105,41 @@ void MidiStore::refreshSettingsFromState()
 }
 
 /**
+ * @private
+ * @brief Abstraction for setting a prop value in the state
+ * 
+ * @param propName 
+ * @param value 
+ */
+void MidiStore::setStateProp(const char* propName, juce::var value)
+{
+    chordState.setProperty(propName, value, nullptr);
+}
+
+/**
+ * @private
+ * @brief Retrieve floating point prop value with a default range
+ * 
+ * @param char* propName 
+ * @param float defaultValue 
+ * @param float min 
+ * @param float max 
+ * @return float 
+ */
+float MidiStore::getStateFloatProp(const char* propName, float defaultValue, float min, float max)
+{
+    float value = defaultValue;
+    if (chordState.hasProperty(propName))
+    {
+        float storedValue = chordState.getProperty(propName);
+        if (storedValue >= min && storedValue <= max)
+            value = storedValue;
+    }
+    return value;
+
+}
+
+/**
  * @brief Are state changes (e.g., update of midi notes) allowed?
  * Update the prop in the state as well so it gets saved by the DAW
  * 
@@ -113,7 +148,7 @@ void MidiStore::refreshSettingsFromState()
 void MidiStore::allowStateChange(bool allow) 
 {
     allowDataRecording = allow;
-    chordState.setProperty(allowRecordingProp, allow, nullptr);
+    setStateProp(allowRecordingProp, allow);
 }
 
 /**
@@ -124,7 +159,7 @@ void MidiStore::allowStateChange(bool allow)
  */
 void MidiStore::setPlayHeadPosition(float percentage)
 {
-    chordState.setProperty(playHeadPositionProp, percentage, nullptr);
+    setStateProp(playHeadPositionProp, percentage);
 }
 
 /**
@@ -134,14 +169,7 @@ void MidiStore::setPlayHeadPosition(float percentage)
  */
 float MidiStore::getPlayHeadPosition()
 {
-    float position = 25.0;
-    if (chordState.hasProperty(playHeadPositionProp))
-    {
-        float storedPosition = chordState.getProperty(playHeadPositionProp);
-        if (storedPosition >= 0.0 && storedPosition <= 100.0)
-            position = storedPosition;
-    }
-    return position;
+    return getStateFloatProp(playHeadPositionProp, 25.0, 0.0, 100.0);
 }
 
 /**
@@ -151,7 +179,7 @@ float MidiStore::getPlayHeadPosition()
  */
 void MidiStore::setTimeWidth(float width)
 {
-    chordState.setProperty(viewWidthProp, width, nullptr);
+    setStateProp(viewWidthProp, width);
 }
 
 /**
@@ -163,15 +191,33 @@ float MidiStore::getTimeWidth()
 {
     // Until I start using this for real and playing live while watching the playback, I 
     // am not sure what good values are. Default to 20 seconds and limit to 100 for now.
-    float width = 20.0;
-    if (chordState.hasProperty(viewWidthProp))
-    {
-        float storedWidth = chordState.getProperty(viewWidthProp);
-        if (storedWidth >= 1.0 && storedWidth <= 100.0)
-            width = storedWidth;
-    }
-    return width;
+    return getStateFloatProp(viewWidthProp, 20.0, 1.0, 100.0);
 }
+
+/**
+ * @brief Store the threshold value that defines what a "short" chord is (chords ignored in the view)
+ * 
+ * @param threshold  
+ */
+void MidiStore::setShortChordThreshold(float threshold)
+{
+    setStateProp(shortChordThresholdProp, threshold);
+    // The view can change if this is modified. More or fewer notes could be in the view
+    this->isViewUpToDate = false;
+}
+
+/**
+ * @brief Retrieve currently stored (or default) threshold that defines what a short chord is
+ * 
+ * @return float 
+ */
+float MidiStore::getShortChordThreshold()
+{
+    // default to half a second
+    // Allowing up to 5 seconds here, but I'm setting the slider to be less currently
+    return getStateFloatProp(shortChordThresholdProp, 0.5, 0.0, 5.0);
+}
+
 
 /**
  * @brief Remove the midi events from the store
@@ -606,6 +652,47 @@ vector <pair<float, string>> MidiStore::createStaticView()
     return newStaticView;
 }
 
+/**
+ * @brief Remove "short" chords. 
+ * The idea is that in a busy score, I don't want to see passing notes showing up as chords. 
+ * They don't fit on the scrolling view. The threshold value is a user controllable value
+ * 
+ * In my original grandiose thinking, this was going to be a very complex and amazing bit of code 
+ * where it would examine series of notes and combine them cleverly. From a practical standpoint,
+ * this dead simple "remove this chord if it is short" seems to work just fine. Maybe as I
+ * start using it more, it will turn into that amazing bit of complex code (that I will never
+ * be able to understand after sufficient time goes by).
+ * 
+ * @param vector view 
+ */
+void MidiStore::removeShortChords(vector<pair<float, string>> &view)
+{
+    float minLength = getShortChordThreshold();
+    vector<pair<float, string>>::iterator it;
+    string prevChord = "";
+
+    for (it = view.begin(); it != view.end(); )
+    {
+        if (it == view.begin() || (it + 1) == view.end() || (it + 1)->first - it->first >= minLength)
+        {
+            // this is either the first or last chord or it is longer than the threshold, so we keep it
+            ++it;
+        }
+        else 
+        {
+            // This chord falls under the threshold, so we will remove it. (Note to future 
+            // forgetful self: erase returns iterator to the next position after deleted item)
+            it = view.erase(it);
+            // If the new current note is the same as the previous one, then we combine it
+            if (it->second == (it - 1)->second)
+            {
+                it = view.erase(it);
+            }
+        }
+    }
+
+}
+
 
 /**
  * @brief Update the "efficient" static view of the set of chords represented by chordState
@@ -620,6 +707,10 @@ void MidiStore::updateStaticView()
 {
     vector<pair<float, string>> newStaticView;
     newStaticView = createStaticView();
+
+    // It is more efficient to get rid of the short chords here (as opposed to inside getChordsInWindow). In "normal" usage
+    // this should happen infrequently. 
+    removeShortChords(newStaticView);
 
     const ScopedLock lock(viewLock);
     this->staticView = newStaticView;
@@ -648,16 +739,14 @@ void MidiStore::updateStaticViewIfOutOfDate()
     }
 }
 
-
 /**
- * @brief Retrieve a vector of time,chord pairs that are in the given window of time (in seconds).
- * This retrieves the data from the static view, which is updated intermittently. It is not guaranteed
- * to match the chordState ... but it should always be very close
+ * @private
+ * @brief Do the work of retrieving the set of chords in the given window
  * 
  * @param viewWindow 
  * @return vector<pair<float, string>> 
  */
-vector<pair<float, string>> MidiStore::getChordsInWindow(pair<float, float> viewWindow)
+vector<pair<float, string>> MidiStore::getChordsInWindowRaw(pair<float, float> viewWindow)
 {
     const ScopedLock lock(viewLock);
 
@@ -675,6 +764,23 @@ vector<pair<float, string>> MidiStore::getChordsInWindow(pair<float, float> view
             break;
         chords.push_back({curChord->first, curChord->second});
     }
+
+    return chords;
+
+}
+
+/**
+ * @brief Retrieve a vector of time,chord pairs that are in the given window of time (in seconds).
+ * This retrieves the data from the static view, which is updated intermittently. It is not guaranteed
+ * to match the chordState ... but it should always be very close
+ * 
+ * @param viewWindow 
+ * @return vector<pair<float, string>> 
+ */
+vector<pair<float, string>> MidiStore::getChordsInWindow(pair<float, float> viewWindow)
+{
+    vector<pair<float, string>> chords;
+    chords = this->getChordsInWindowRaw(viewWindow);
 
     this->viewWindowChordCount = static_cast<int>(chords.size());
 
