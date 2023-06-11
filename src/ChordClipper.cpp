@@ -84,21 +84,22 @@ ChordVectorType ChordClipper::getChordsToDisplay()
     viewWindow.first -= 2.0f;
     viewWindow.second += 2.0f;
 
-    // Compute 
+    // Compute the difference in current buffer and new buffer and update it accordingly
     newWindow = computeNewWindowSize(viewWindow);
     newChords = midiState.getChordsInWindow(newWindow);
-    chords = constructDisplayedChords(viewWindow, newChords);
+    constructDisplayedChords(viewWindow, newChords);
 
     // need to offset the values to the window. If the window is 50 to 70, and we have events
     // at 55 and 56, then we want to change them to be 5 and 6 respectively (make their offsets
     // be relative to the window)
+    chords = this->viewBuffer;
     for (auto &i : chords) 
         i.first -= offset;
 
     return chords;
 }
 
-ChordVectorType ChordClipper::constructDisplayedChords(ViewWindowType viewWindow, ChordVectorType newChords)
+void ChordClipper::constructDisplayedChords(ViewWindowType viewWindow, ChordVectorType newChords)
 {
     if (!hasForwardOverlap(viewWindow))
     {
@@ -130,11 +131,16 @@ ChordVectorType ChordClipper::constructDisplayedChords(ViewWindowType viewWindow
     }
 
     this->viewBufferSize = viewWindow;
-    return this->viewBuffer;
 }
 
 
-ViewWindowType ChordClipper::computeNewWindowSize(pair<float, float> neededWindow)
+/**
+ * @brief Compute the window size of the "new" window while scrolling forward
+ * 
+ * @param neededWindow     This is the desired end result window
+ * @return ViewWindowType 
+ */
+ViewWindowType ChordClipper::computeNewWindowSize(ViewWindowType neededWindow)
 {
     if (hasForwardOverlap(neededWindow))
     {
@@ -149,6 +155,12 @@ ViewWindowType ChordClipper::computeNewWindowSize(pair<float, float> neededWindo
     }
 }
 
+/**
+ * @brief Determine if the new window overlaps the existing window in a forward moving direction
+ * 
+ * @param neededWindow 
+ * @return bool          true if there is overlap of the type we are interested in, false if not
+ */
 bool ChordClipper::hasForwardOverlap(ViewWindowType neededWindow)
 {
     // Optimizing for forward playback. I could handle all possible overlaps and 

@@ -18,7 +18,7 @@ using namespace juce;
 
 ChordView::ChordView(MidiStore &ms) : chordClipper(ms)
 {
-    setFramesPerSecond(60);
+    setFramesPerSecond(30);
 }
 
 

@@ -42,7 +42,7 @@ private:
     bool isEventInWindow(pair<float, float> viewWindow, float eventSeconds, float &relativePosition);
     pair<float, float> computeNewWindowSize(pair<float, float> neededWindow);
     bool hasForwardOverlap(ViewWindowType neededWindow);
-    ChordVectorType constructDisplayedChords(ViewWindowType viewWindow, ChordVectorType newChords);
+    void constructDisplayedChords(ViewWindowType viewWindow, ChordVectorType newChords);
 
     // The time (in seconds) of the most recently seen track time
     float mostRecentPlayPosition = 0.0;
