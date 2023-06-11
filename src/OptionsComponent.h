@@ -26,6 +26,7 @@ public:
 
     void adjustPositionPlayhead(double value);
     void adjustTimeWidth(double value);
+    void adjustShortChordThreshold(double value);
 
     void recordingClick(bool state);
 
@@ -39,6 +40,8 @@ private:
     juce::Slider positionOfPlayheadSlider;
     juce::Label timeWidthLabel;
     juce::Slider timeWidthSlider;
+    juce::Label shortChordLabel;
+    juce::Slider shortChordSlider;
     void paint(juce::Graphics &g) override;
     MidiStore &midiState;
 

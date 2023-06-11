@@ -431,6 +431,101 @@ TEST_CASE("view update", "storage")
     REQUIRE(chords == expected);
 }
 
+// Helper function for setting up a series of notes. This uses given floating point time
+// in seconds and computes (arbitrarily) the int64 time in milliseconds
+static void addNote(MidiStore &ms, double time, double duration, int note)
+{
+    int64 onTime = static_cast<int64>(time * 1000);
+    int64 offTime = static_cast<int64>((time + duration) * 1000);
+    ms.addNoteEventAtTime(onTime, note, true);
+    ms.setEventTimeSeconds(onTime, static_cast<float>(time));
+    ms.addNoteEventAtTime(offTime, note, false);
+    ms.setEventTimeSeconds(offTime, static_cast<float>(time + duration));
+    ms.updateStaticView();
+}
+
+
+TEST_CASE("short chord removal basic", "storage")
+{
+    MidiStore ms;
+    vector<pair<float, string>> chords;
+    vector<pair<float, string>> expected;
+    ms.setQuantizationValue(1);
+
+    ms.setShortChordThreshold(0.0);
+
+    addNote(ms, 1.0, 1.0, 12);
+    addNote(ms, 2.0, 1.0, 17);
+    chords = ms.getChordsInWindow({1.0, 10.0});
+    expected = {{1.0, "C"}, {2.0, "F"}};
+    REQUIRE(chords == expected);
+
+    // add a slight blip of a chord at the end of the C
+    addNote(ms, 1.9, 0.1, 21);
+    chords = ms.getChordsInWindow({1.0, 10.0});
+    expected = {{1.0, "C"}, {1.9, "C6"}, {2.0, "F"}};
+    REQUIRE(chords == expected);
+
+    ms.setShortChordThreshold(0.25);
+    ms.updateStaticViewIfOutOfDate();
+    chords = ms.getChordsInWindow({1.0, 10.0});
+    expected = {{1.0, "C"}, {2.0, "F"}};
+    REQUIRE(chords == expected);
+}
+
+// verify that removal of chord between two chords with same name combines them
+TEST_CASE("short chord removal connect", "storage")
+{
+    MidiStore ms;
+    vector<pair<float, string>> chords;
+    vector<pair<float, string>> expected;
+    ms.setQuantizationValue(1);
+
+    addNote(ms, 1.0, 1.0, 12);
+    addNote(ms, 2.0, 1.0, 12);
+    chords = ms.getChordsInWindow({1.0, 10.0});
+    expected = {{1.0, "C"}};
+    REQUIRE(chords == expected);
+
+    // Add a short chord in the middle
+    addNote(ms, 1.9, 0.1, 21);
+    chords = ms.getChordsInWindow({1.0, 10.0});
+    expected = {{1.0, "C"}};
+    REQUIRE(chords == expected);
+}
+
+// Test case to verify that short last chord behaves okay
+TEST_CASE("short chord removal last", "storage")
+{
+    MidiStore ms;
+    vector<pair<float, string>> chords;
+    vector<pair<float, string>> expected;
+    ms.setQuantizationValue(1);
+
+    addNote(ms, 1.0, 1.0, 12);
+    addNote(ms, 2.0, 1.0, 17);
+    addNote(ms, 2.9, 0.1, 12);
+    addNote(ms, 2.9, 0.1, 21);
+    chords = ms.getChordsInWindow({1.0, 10.0});
+    expected = {{1.0, "C"}, {2.0, "F"}, {2.9, "F/C"}};
+    REQUIRE(chords == expected);
+}
+
+// test first short chord
+TEST_CASE("short chord removal first", "storage")
+{
+    MidiStore ms;
+    vector<pair<float, string>> chords;
+    vector<pair<float, string>> expected;
+    ms.setQuantizationValue(1);
+
+    addNote(ms, 1.0, 0.1, 12);
+    addNote(ms, 1.1, 0.9, 17);
+    chords = ms.getChordsInWindow({1.0, 10.0});
+    expected = {{1.0, "C"}, {1.1, "F"}};
+    REQUIRE(chords == expected);
+}
+
 
 TEST_CASE("get event times", "storage") 
 {

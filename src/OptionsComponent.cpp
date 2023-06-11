@@ -15,8 +15,9 @@ using namespace juce;
 OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
 {
     propsPanel.setColour(juce::GroupComponent::ColourIds::outlineColourId, juce::Colours::darkgrey);
-    // propsPanel.addChildComponent(&resetChordsButton);
+
     addAndMakeVisible(propsPanel);
+
     recordingOnToggle.setButtonText("Record Notes");
     propsPanel.addAndMakeVisible(&recordingOnToggle);
     resetChordsButton.setButtonText("Clear Notes!");
@@ -26,11 +27,25 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
     propsPanel.addAndMakeVisible(&positionOfPlayheadSlider);
     positionOfPlayheadSlider.setRange(1.0, 99.0, 1.0);
     positionOfPlayheadSlider.setTextValueSuffix(" %");
+    playheadLabel.attachToComponent(&positionOfPlayheadSlider, true);
+    propsPanel.addAndMakeVisible(playheadLabel);
+    playheadLabel.setText("Playhead", juce::dontSendNotification);
 
     // The number of seconds represented by the window
     propsPanel.addAndMakeVisible(&timeWidthSlider);
     timeWidthSlider.setRange(4.0, 30.0, 1.0);
     timeWidthSlider.setTextValueSuffix(" sec");
+    timeWidthLabel.attachToComponent(&timeWidthSlider, true);
+    propsPanel.addAndMakeVisible(timeWidthLabel);
+    timeWidthLabel.setText("View Seconds", juce::dontSendNotification);
+
+    // Minimum width (in seconds) for chords to display
+    propsPanel.addAndMakeVisible(&shortChordSlider);
+    shortChordSlider.setRange(0.0, 2.5, 0.1);
+    shortChordSlider.setTextValueSuffix(" sec");
+    shortChordLabel.attachToComponent(&shortChordSlider, true);
+    propsPanel.addAndMakeVisible(shortChordLabel);
+    shortChordLabel.setText("Minimum chord", juce::dontSendNotification);
 
     // click handler lambdas
     resetChordsButton.onClick = [this] { resetClick(); };
@@ -39,15 +54,12 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
 
     positionOfPlayheadSlider.onValueChange = [this] { adjustPositionPlayhead(positionOfPlayheadSlider.getValue()); };
     positionOfPlayheadSlider.setValue(ms.getPlayHeadPosition(), juce::sendNotification);
-    playheadLabel.attachToComponent(&positionOfPlayheadSlider, true);
-    addAndMakeVisible(playheadLabel);
-    playheadLabel.setText("Playhead", juce::dontSendNotification);
 
     timeWidthSlider.onValueChange = [this] { adjustTimeWidth(timeWidthSlider.getValue()); };
     timeWidthSlider.setValue(ms.getTimeWidth(), juce::sendNotification);
-    timeWidthLabel.attachToComponent(&timeWidthSlider, true);
-    addAndMakeVisible(timeWidthLabel);
-    timeWidthLabel.setText("View Seconds", juce::dontSendNotification);
+
+    shortChordSlider.onValueChange = [this] { adjustShortChordThreshold(shortChordSlider.getValue()); };
+    shortChordSlider.setValue(ms.getShortChordThreshold(), juce::sendNotification);
 }
 
 /**
@@ -80,6 +92,11 @@ void OptionsComponent::adjustTimeWidth(double value)
     midiState.setTimeWidth(static_cast<float>(value));
 }
 
+void OptionsComponent::adjustShortChordThreshold(double value)
+{
+    midiState.setShortChordThreshold(static_cast<float>(value));
+}
+
 void OptionsComponent::recordingClick(bool state)
 {
     midiState.allowStateChange(state);
@@ -104,4 +121,7 @@ void OptionsComponent::resized() // override
     column = resetChordsButton.getBounds().getWidth() + 150;
     positionOfPlayheadSlider.setBounds(column, area.getHeight() / 3 - buttonHeight / 2, 200, buttonHeight);
     timeWidthSlider.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 200, buttonHeight);
+
+    column += positionOfPlayheadSlider.getBounds().getWidth() + 150;
+    shortChordSlider.setBounds(column, area.getHeight() / 3 - buttonHeight / 2, 200, buttonHeight);
 }

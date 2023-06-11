@@ -73,6 +73,12 @@ vector<pair<float, string>> ChordClipper::getChordsToDisplay()
     vector<pair<float, string>> chords;
     float offset = viewWindow.first;
 
+    // TODO: efficiency change:
+    // Maintain state info in this class of current chords being displayed. And then here, we should be able to
+    // just get new chords once every second perhaps (since we have the 2 second buffer). That way, if we already
+    // have chords for time T 20 to 30 and then when we are asking for chords from 21 to 31, we should need only
+    // to get the chords for time T 30 to 31 and just update the existing set.
+
     viewWindow.first -= 2.0f;
     viewWindow.second += 2.0f;
     chords = midiState.getChordsInWindow(viewWindow);
