@@ -29,6 +29,8 @@ public:
     vector<pair<float, string>> getChordsToDisplay();
     void updateCurrentPosition(int msSinceLastUpdate);
 
+    vector<float> getMeasuresToDisplay();
+
     float getViewWidthInSeconds();
     float getCurrentNotePosition();
 

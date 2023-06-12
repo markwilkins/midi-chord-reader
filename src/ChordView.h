@@ -34,11 +34,13 @@ public:
     void update() override;
     void paint(juce::Graphics &g) override;
 
+
     void resized() override;
 
 private:
     ChordClipper chordClipper;
     void drawChords(vector<pair<float, string>> chords, juce::Graphics &g);
+    void drawMeasures(vector<float> bars, juce::Graphics &g);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordView)
 };

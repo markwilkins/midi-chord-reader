@@ -132,3 +132,74 @@ TEST_CASE("chord view forward", "chordview")
     expected = {{1, "G"}, {5, "E"}};
     REQUIRE(chords == expected);
 }
+
+
+TEST_CASE("measure bars", "chordview")
+{
+    MidiStore ms;
+    ChordClipper cp(ms);
+    vector<float> bars;
+    vector<float> expected;
+    ms.setQuantizationValue(1);
+
+    ms.setTimeWidth(20.0);
+    // Set the "now" position at the left side of the view window (math is easier 
+    // for writing this test)
+    ms.setPlayHeadPosition(50.0);
+
+
+    // verify that if values are not set, it is empty
+    bars = cp.getMeasuresToDisplay();
+    expected = {};
+    REQUIRE(bars == expected);
+
+    ms.setBPMeasure(4);
+    ms.setBPMinute(60.0);
+
+    ms.setLastEventTimeInSeconds(24.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = {2, 6, 10, 14, 18};
+    REQUIRE(bars == expected);
+
+    ms.setLastEventTimeInSeconds(25.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = {1, 5, 9, 13, 17};
+    REQUIRE(bars == expected);
+
+    ms.setLastEventTimeInSeconds(26.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = {4, 8, 12, 16};
+    REQUIRE(bars == expected);
+
+    ms.setLastEventTimeInSeconds(0.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = {2, 6, 10, 14, 18};
+    REQUIRE(bars == expected);
+
+    ms.setLastEventTimeInSeconds(1.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = {1, 5, 9, 13, 17};
+    REQUIRE(bars == expected);
+
+    // Try something slightly more mathematically challenging (but still with nice round numbers)
+    ms.setBPMeasure(6);
+    ms.setBPMinute(90.0);
+    ms.setLastEventTimeInSeconds(15.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = {3, 7, 11, 15, 19};
+    REQUIRE(bars == expected);
+
+    ms.setBPMeasure(4);
+    ms.setBPMinute(80.0);
+    ms.setLastEventTimeInSeconds(14.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = {2, 5, 8, 11, 14, 17};
+    REQUIRE(bars == expected);
+}

@@ -35,6 +35,11 @@ void ChordView::paint(juce::Graphics &g)
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
+    g.setColour(juce::Colours::black);
+    vector<float> bars = chordClipper.getMeasuresToDisplay();
+    this->drawMeasures(bars, g);
+
+    // Draw the "now" marker
     int x = static_cast<int>(getWidth() * chordClipper.getCurrentNotePosition() / chordClipper.getViewWidthInSeconds());
     g.setColour(juce::Colours::red);
     g.drawVerticalLine(x, 0, getHeight());
@@ -44,6 +49,17 @@ void ChordView::paint(juce::Graphics &g)
     this->drawChords(chords, g);
 }
 
+
+void ChordView::drawMeasures(vector<float> bars, juce::Graphics &g)
+{
+    float ratio = static_cast<float>(getWidth()) / chordClipper.getViewWidthInSeconds();
+    for (vector<float>::iterator it = bars.begin(); it != bars.end(); ++it)
+    {
+        g.drawVerticalLine(static_cast<int>(*it * ratio), 0, getHeight());
+
+    }
+
+}
 
 /**
  * @brief Draw the given set of chords onto the graphics area

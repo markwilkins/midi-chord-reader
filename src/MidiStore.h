@@ -54,7 +54,6 @@ public:
     inline static const char* viewWidthProp = "viewWidthProp";
     inline static const char* shortChordThresholdProp = "shortChordThresholdProp";
 
-    
 
 
     MidiStore();
@@ -90,6 +89,10 @@ public:
     float getTimeWidth();
     void setShortChordThreshold(float threshold);
     float getShortChordThreshold();
+    void setBPMinute(double bpm);
+    optional<double> getBPMinute();
+    void setBPMeasure(int bpmeasure);
+    optional<int> getBPMeasure();
 
     bool getRecordingState() { return allowDataRecording; }
 
@@ -134,6 +137,10 @@ private:
     bool allowDataRecording = true;
     // flag indicating if we think playback is occuring
     bool isPlaying = false;
+
+    // Beats per minute and measure. optional because the juce doc says it is optional from the host
+    optional<double> bpMinute = std::nullopt;
+    optional<int> bpMeasure = std::nullopt;
 
     // Maintain the most recent time we received an event. This is for keeping aware of where the 
     // current location is in the playback. If this doesn't provide enough detail, then I might
