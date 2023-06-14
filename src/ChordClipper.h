@@ -26,10 +26,10 @@ class ChordClipper
 {
 public:
     ChordClipper(MidiStore&);
-    vector<pair<float, string>> getChordsToDisplay();
+    ChordVectorType getChordsToDisplay();
+    MeasurePositionType getMeasuresToDisplay();
     void updateCurrentPosition(int msSinceLastUpdate);
 
-    vector<float> getMeasuresToDisplay();
 
     float getViewWidthInSeconds();
     float getCurrentNotePosition();

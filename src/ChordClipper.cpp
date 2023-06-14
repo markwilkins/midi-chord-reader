@@ -60,18 +60,23 @@ void ChordClipper::updateCurrentPosition(int msSinceLastUpdate)
 /**
  * @brief Retrieve the measures (bar positions)
  * 
- * @return vector<float>   Positions of the vertical lines in seconds (0 is left-most side of window)
+ * @return vector<int, float>   Measure numbers and the positions of the vertical bars in 
+ *                              seconds (0 is left-most side of window)
  */
-vector<float> ChordClipper::getMeasuresToDisplay()
+MeasurePositionType ChordClipper::getMeasuresToDisplay()
 {
     optional<int> bpMeasure = midiState.getBPMeasure();
     optional<double> bpMinute = midiState.getBPMinute();
-    vector<float> bars;
+    MeasurePositionType bars;
 
     if (!bpMeasure || !bpMinute)
-        // one or both of the values is not available 
+        // one or both of the values is not available (or is zero, which is as good as not available)
         return {};
 
+    // TODO (or at least think about): This gets called every paint refresh and contains several floating
+    // point divisions. Could potentially save the current state in the class and then just update the 
+    // position by time since last update. Or maybe just save the first two values if the bpm and bpm have
+    // not changed ... but maybe I am overthinking it.
     ViewWindowType viewWindow = getViewWindowSize();
     float left = viewWindow.first;
 
@@ -80,13 +85,24 @@ vector<float> ChordClipper::getMeasuresToDisplay()
     double measuresPerMinute = *bpMinute / *bpMeasure;
     // Now 60 sec/min / (measure/minute) = seconds / measure
     double secondsPerMeasure = 60.0 / measuresPerMinute;
-    double timeSinceLastBar = left - (floor(left / secondsPerMeasure) * secondsPerMeasure);
+    // 0-based measure number is the floor of left side of window divided by Sec/Measure
+    int measureNumber = static_cast<int>(floor(left / secondsPerMeasure));
+    // Elapsed time of left-most displayable measure bar in the view
+    double timeSinceLastBar = left - measureNumber * secondsPerMeasure;
     double barPos = secondsPerMeasure - timeSinceLastBar;
+    // 1-based (music measures are not numbered in C ... well not that C)
+    // And then add one more if the bar is not at the left of the view window (can't see the number
+    // of the bar that is currently in view ... it is slightly to the left of the view window)
+    measureNumber++;   
+    if (barPos > 0.0)
+        measureNumber++;
+
     double viewWidth = getViewWidthInSeconds();
     while (barPos < viewWidth)
     {
-        bars.push_back(static_cast<float>(barPos));
+        bars.push_back({measureNumber, static_cast<float>(barPos)});
         barPos += secondsPerMeasure;
+        measureNumber++;
     }
     return bars;
 }
