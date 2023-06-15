@@ -12,6 +12,7 @@
 #include "ChordView.h"
 #include "ChordName.h"
 #include "ChordClipper.h"
+#include "MidiChordsTypes.h"
 
 using namespace std;
 using namespace juce;
@@ -35,6 +36,11 @@ void ChordView::paint(juce::Graphics &g)
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
+    g.setColour(juce::Colours::black);
+    MeasurePositionType bars = chordClipper.getMeasuresToDisplay();
+    this->drawMeasures(bars, g);
+
+    // Draw the "now" marker
     int x = static_cast<int>(getWidth() * chordClipper.getCurrentNotePosition() / chordClipper.getViewWidthInSeconds());
     g.setColour(juce::Colours::red);
     g.drawVerticalLine(x, 0, getHeight());
@@ -44,6 +50,24 @@ void ChordView::paint(juce::Graphics &g)
     this->drawChords(chords, g);
 }
 
+
+void ChordView::drawMeasures(MeasurePositionType bars, juce::Graphics &g)
+{
+    auto area = getLocalBounds();
+    juce::Rectangle<float> textBox;
+    textBox = area.toFloat();
+    textBox.setTop(5);
+    float ratio = static_cast<float>(getWidth()) / chordClipper.getViewWidthInSeconds();
+    g.setFont(15.0);
+    for (MeasurePositionType::iterator it = bars.begin(); it != bars.end(); ++it)
+    {
+        float xPos = it->second * ratio;
+        g.drawVerticalLine(static_cast<int>(xPos), 0, getHeight());
+        textBox.setLeft(xPos + 10);
+        g.drawText(to_string(it->first), textBox, juce::Justification::topLeft);
+    }
+
+}
 
 /**
  * @brief Draw the given set of chords onto the graphics area

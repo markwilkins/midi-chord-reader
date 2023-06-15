@@ -58,10 +58,60 @@ void ChordClipper::updateCurrentPosition(int msSinceLastUpdate)
 }
 
 /**
+ * @brief Retrieve the measures (bar positions)
+ * 
+ * @return vector<int, float>   Measure numbers and the positions of the vertical bars in 
+ *                              seconds (0 is left-most side of window)
+ */
+MeasurePositionType ChordClipper::getMeasuresToDisplay()
+{
+    optional<int> bpMeasure = midiState.getBPMeasure();
+    optional<double> bpMinute = midiState.getBPMinute();
+    MeasurePositionType bars;
+
+    if (!bpMeasure || !bpMinute)
+        // one or both of the values is not available (or is zero, which is as good as not available)
+        return {};
+
+    // TODO (or at least think about): This gets called every paint refresh and contains several floating
+    // point divisions. Could potentially save the current state in the class and then just update the 
+    // position by time since last update. Or maybe just save the first two values if the bpm and bpm have
+    // not changed ... but maybe I am overthinking it.
+    ViewWindowType viewWindow = getViewWindowSize();
+    float left = viewWindow.first;
+
+    // Compute seconds per measure
+    // compute the measures per minute:
+    double measuresPerMinute = *bpMinute / *bpMeasure;
+    // Now 60 sec/min / (measure/minute) = seconds / measure
+    double secondsPerMeasure = 60.0 / measuresPerMinute;
+    // 0-based measure number is the floor of left side of window divided by Sec/Measure
+    int measureNumber = static_cast<int>(floor(left / secondsPerMeasure));
+    // Elapsed time of left-most displayable measure bar in the view
+    double timeSinceLastBar = left - measureNumber * secondsPerMeasure;
+    double barPos = secondsPerMeasure - timeSinceLastBar;
+    // 1-based (music measures are not numbered in C ... well not that C)
+    // And then add one more if the bar is not at the left of the view window (can't see the number
+    // of the bar that is currently in view ... it is slightly to the left of the view window)
+    measureNumber++;   
+    if (barPos > 0.0)
+        measureNumber++;
+
+    double viewWidth = getViewWidthInSeconds();
+    while (barPos < viewWidth)
+    {
+        bars.push_back({measureNumber, static_cast<float>(barPos)});
+        barPos += secondsPerMeasure;
+        measureNumber++;
+    }
+    return bars;
+}
+
+/**
  * @brief Get the set of displayable chords.
  * @details
  * This retrieves the "viewport" of the current window based on the current playhead position.
- * For each of the chords that falls into that window, it puts into a map of chords where the
+ * For each of the chords that falls into that window, it puts into a vector of chords where the
  * floating point time in seconds is the time relative to the window. (e.g., where 0 is the left-most
  * side of the window)
  * 
@@ -76,11 +126,6 @@ ChordVectorType ChordClipper::getChordsToDisplay()
     vector<pair<float, string>> newChords;
     float offset = viewWindow.first;
 
-    // TODO: efficiency change:
-    // Maintain state info in this class of current chords being displayed. And then here, we should be able to
-    // just get new chords once every second perhaps (since we have the 2 second buffer). That way, if we already
-    // have chords for time T 20 to 30 and then when we are asking for chords from 21 to 31, we should need only
-    // to get the chords for time T 30 to 31 and just update the existing set.
     viewWindow.first -= 2.0f;
     viewWindow.second += 2.0f;
 
@@ -121,10 +166,12 @@ void ChordClipper::constructDisplayedChords(ViewWindowType viewWindow, ChordVect
             }
         }
 
+        /*
         for (ChordVectorType::iterator it = newChords.begin(); it != newChords.end(); ++it)
         {
             DBG("Appending chord to end: " + it->second);
         }
+        */
 
         // add the new ones
         this->viewBuffer.insert(viewBuffer.end(), newChords.begin(), newChords.end());
@@ -197,9 +244,14 @@ pair<float, float> ChordClipper::getViewWindowSize()
     return {start, end};
 }
 
-// Reference position of "now" in the view port. This is where in the current position of the playhead resides.
-// In other words, if window width represents 20 seconds and this is value 5, then the currently playing note (chord)
-// will be at 25% from the left.
+/**
+ * @brief Retrieve reference position of "now" in the view port.
+ * This is where in the current position of the playhead resides.  In other words, if window 
+ * width represents 20 seconds and this is value 5, then the currently playing note (chord)
+ * will be at 25% from the left.
+ * 
+ * @return float 
+ */
 float ChordClipper::getCurrentNotePosition()
 {
     // in percent

@@ -218,6 +218,46 @@ float MidiStore::getShortChordThreshold()
     return getStateFloatProp(shortChordThresholdProp, 0.5, 0.0, 5.0);
 }
 
+/**
+ * @brief Store the beats per minute
+ * 
+ * @param bpm  
+ */
+void MidiStore::setBPMinute(double bpm)
+{
+    this->bpMinute = bpm;
+}
+
+/**
+ * @brief Retrieve beats per minute if available
+ * 
+ * @return optional<double> 
+ */
+optional<double> MidiStore::getBPMinute()
+{
+    return this->bpMinute;
+}
+
+/**
+ * @brief Store the beats per measure
+ * 
+ * @param bpm  
+ */
+void MidiStore::setBPMeasure(int bpm)
+{
+    this->bpMeasure = bpm;
+}
+
+/**
+ * @brief Retrieve beats per measure if available
+ * 
+ * @return optional<int> 
+ */
+optional<int> MidiStore::getBPMeasure()
+{
+    return this->bpMeasure;
+}
+
 
 /**
  * @brief Remove the midi events from the store

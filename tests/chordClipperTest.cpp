@@ -132,3 +132,84 @@ TEST_CASE("chord view forward", "chordview")
     expected = {{1, "G"}, {5, "E"}};
     REQUIRE(chords == expected);
 }
+
+// Utility to add measure numbers to measure position vector
+static MeasurePositionType addMeasureNumbers(int start, vector<float> measures)
+{
+    MeasurePositionType m;
+
+    for (vector<float>::iterator it = measures.begin(); it != measures.end(); ++it)
+    {
+        m.push_back({start, *it});
+        start++;
+    }
+    return m;
+}
+
+TEST_CASE("measure bars", "chordview")
+{
+    MidiStore ms;
+    ChordClipper cp(ms);
+    MeasurePositionType bars;
+    MeasurePositionType expected;
+    ms.setQuantizationValue(1);
+
+    ms.setTimeWidth(20.0);
+    ms.setPlayHeadPosition(50.0);
+
+
+    // verify that if values are not set, it is empty
+    bars = cp.getMeasuresToDisplay();
+    expected = {};
+    REQUIRE(bars == expected);
+
+    ms.setBPMeasure(4);
+    ms.setBPMinute(60.0);
+
+    ms.setLastEventTimeInSeconds(24.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = addMeasureNumbers(5, {2, 6, 10, 14, 18});
+    REQUIRE(bars == expected);
+
+    ms.setLastEventTimeInSeconds(25.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = addMeasureNumbers(5, {1, 5, 9, 13, 17});
+    REQUIRE(bars == expected);
+
+    ms.setLastEventTimeInSeconds(26.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = addMeasureNumbers(6, {4, 8, 12, 16});
+    REQUIRE(bars == expected);
+
+    ms.setLastEventTimeInSeconds(0.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = addMeasureNumbers(-1, {2, 6, 10, 14, 18});
+    REQUIRE(bars == expected);
+
+    ms.setLastEventTimeInSeconds(1.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = addMeasureNumbers(-1, {1, 5, 9, 13, 17});
+    REQUIRE(bars == expected);
+
+    // Try something slightly more mathematically challenging (but still with nice round numbers)
+    ms.setBPMeasure(6);
+    ms.setBPMinute(90.0);
+    ms.setLastEventTimeInSeconds(15.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = addMeasureNumbers(3, {3, 7, 11, 15, 19});
+    REQUIRE(bars == expected);
+
+    ms.setBPMeasure(4);
+    ms.setBPMinute(80.0);
+    ms.setLastEventTimeInSeconds(14.0);
+    cp.updateCurrentPosition(0);
+    bars = cp.getMeasuresToDisplay();
+    expected = addMeasureNumbers(3, {2, 5, 8, 11, 14, 17});
+    REQUIRE(bars == expected);
+}

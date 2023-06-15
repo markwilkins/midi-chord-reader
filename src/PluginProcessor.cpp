@@ -150,6 +150,11 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     if (auto positionInfo = getPlayHead()->getPosition()) 
     {
         this->midiState.setIsPlaying(positionInfo->getIsPlaying());
+
+        if (auto bpMeasure = positionInfo->getTimeSignature())
+            this->midiState.setBPMeasure(bpMeasure->numerator);
+        if (auto bpMinute = positionInfo->getBpm())
+            this->midiState.setBPMinute(*bpMinute);
     }
 
     for (const auto metadata : midiMessages)
