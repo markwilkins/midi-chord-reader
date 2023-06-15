@@ -34,9 +34,13 @@ void ChordView::update()
 void ChordView::paint(juce::Graphics &g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
+    getLookAndFeel().setDefaultLookAndFeel(new juce::LookAndFeel_V3());
+    getLookAndFeel().setColour(juce::ResizableWindow::backgroundColourId, juce::Colours::white);
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-
+    
     g.setColour(juce::Colours::black);
+    // Need to figure out how to make this thing draw its own border
+    g.drawRect(getLocalBounds(), 1);
     MeasurePositionType bars = chordClipper.getMeasuresToDisplay();
     this->drawMeasures(bars, g);
 
@@ -45,7 +49,7 @@ void ChordView::paint(juce::Graphics &g)
     g.setColour(juce::Colours::red);
     g.drawVerticalLine(x, 0, getHeight());
 
-    g.setColour(getLookAndFeel().findColour(juce::Slider::thumbColourId));
+    g.setColour(juce::Colours::black);
     ChordVectorType chords = chordClipper.getChordsToDisplay();
     this->drawChords(chords, g);
 }
