@@ -36,6 +36,7 @@ public:
 
     string nameChord(vector<int> notes);
     string midiNoteToName(int note);
+    optional<string> getUnicodeSymbol(char c);
 
     // These "maybe" should be private methods. But 
     bool normalizeNotes(vector<int> &notes);
@@ -46,6 +47,7 @@ private:
     string twoNoteChordName(vector<int> notes);
     string multiNoteChordName(vector<int> notes);
     bool isSharpKey(string key);
+
 
     // one could have semantic arguments about these, but the F# vs Gb one is probably the main one
     // that seems like it could be argued either way. Going with the flat option for now (gives 6 for each)
@@ -63,7 +65,7 @@ private:
     {
         {1, ""},
         {2, "2"},
-        {3, "min"},
+        {3, "m"},
         {4, ""},
         {5, "4"},
         {6, ""},   // not really sure what this would be. C+F# for example. Dunno
@@ -80,7 +82,7 @@ private:
     inline static const map<tuple<int, int, int>, string> chordQuality = 
     {
         {{4, 3, 0}, ""},     // Could include "maj" here ... but I don't want to see "maj" on every one of these
-        {{3, 4, 0}, "min"},
+        {{3, 4, 0}, "m"},
         {{3, 3, 0}, "dim"},
         {{4, 4, 0}, "aug"},
         {{4, 3, 3}, "7"},   // dominant 7th
@@ -93,7 +95,14 @@ private:
         
     };
 
-    // TODO: still need to determine if F# or Gb
+    // map flat and sharp to the unicode symbol
+    inline static const map<char, string> musicSymbolLookup = {
+        {'b', "\xe2\x99\xad"},   // flat
+        {'n', "\xe2\x99\xae"},   // natural
+        {'#', "\xe2\x99\xaf"},   // sharp
+
+    };
+
     inline static const map<int, string> midiNoteLookup = {
         {0, "C"},
         {1, "Db"},

@@ -232,27 +232,14 @@ string ChordName::midiNoteToName(int note)
     return "unknown note";
 }
 
-/*
-string ChordName::midiNoteToNameFirstCut(int note, string key)
-{
-    bool isSharpKey;
-    bool isMinor;
 
-    // Normalize to values 0 to 11 (0 is C, ... 11 is B)
-    note %= 12;
-    auto it = chordMap.find(note);
-    if (it != chordMap.end())
-    {
-        pair<int, chordInfo> ci = *it;
-        bool isSharp = ci.second.isSharp;
-
-    }
-
-    return "";
-
-}
-*/
-
+/**
+ * @brief Determine if a given key is one of the "sharp" keys (e.g., a key that has the
+ * black notes typically represented as sharps)
+ * 
+ * @param string key 
+ * @return bool
+ */
 bool ChordName::isSharpKey(string key)
 {
     auto it = chordLookup.find(key);
@@ -262,6 +249,21 @@ bool ChordName::isSharpKey(string key)
         return ci.second.isSharp;
     }
 
-    // Maybe should log something here
+    // Maybe should log something here ... it means we don't have the key in our map
     return true;
+}
+
+
+/**
+ * @brief Retrieve the unicode symbol for a given character (e.g., map b to the unicode flat symbol)
+ * 
+ * @param c 
+ * @return optional<string> 
+ */
+optional<string> ChordName::getUnicodeSymbol(char c) {
+    auto symbol = musicSymbolLookup.find(c);
+    if (symbol != musicSymbolLookup.end()) 
+        return symbol->second;
+    else
+        return nullopt;
 }

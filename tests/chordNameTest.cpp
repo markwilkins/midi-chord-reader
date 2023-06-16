@@ -67,10 +67,10 @@ TEST_CASE("two note chords", "chordident")
 
     notes = {0, 3};
     name = cn.nameChord(notes);
-    REQUIRE(name == "Cmin");
+    REQUIRE(name == "Cm");
     notes = {3, 0, 12};
     name = cn.nameChord(notes);
-    REQUIRE(name == "Cmin");
+    REQUIRE(name == "Cm");
     notes = {3, 12};
     name = cn.nameChord(notes);
     REQUIRE(name == "Eb6");
@@ -124,7 +124,7 @@ TEST_CASE("three note chords", "chordident")
     REQUIRE(name == "C");
     notes = {0, 3, 7};
     name = cn.nameChord(notes);
-    REQUIRE(name == "Cmin");
+    REQUIRE(name == "Cm");
     notes = {8, 11, 14};
     name = cn.nameChord(notes);
     REQUIRE(name == "Abdim");
@@ -149,7 +149,7 @@ TEST_CASE("three note chords", "chordident")
     // C#EG# . (the minor 3rd of A major)
     notes = {1, 4, 8};
     name = cn.nameChord(notes);
-    //REQUIRE(name == "C#min");
+    //REQUIRE(name == "C#m");
     // F#A#C# (the V chord of B major)
     notes = {18, 22, 25};
     name = cn.nameChord(notes);
@@ -181,7 +181,7 @@ TEST_CASE("four note chords", "chordident")
     // CGBbD
     notes = {12, 19, 22, 26};
     name = cn.nameChord(notes);
-    REQUIRE(name == "Gmin/C");
+    REQUIRE(name == "Gm/C");
 
     // mlwtbd - need to think about this one. Current code doesn't detect this ... but
     // it seems like maybe it doesn't have an obvious solution. In fact, I guess I'm not sure
@@ -229,4 +229,18 @@ TEST_CASE("test gap rotation", "chordtransform")
     expected = {11, 12, 17};
     REQUIRE(notes == expected);
     REQUIRE(rotated == true);
+}
+
+TEST_CASE("flat sharp", "chordident")
+{
+    ChordName cn;
+
+    optional<string> symbol = cn.getUnicodeSymbol('j');
+    REQUIRE(symbol == std::nullopt);
+    symbol = cn.getUnicodeSymbol('#');
+    REQUIRE(*symbol == "\xe2\x99\xaf");
+    symbol = cn.getUnicodeSymbol('b');
+    REQUIRE(*symbol == "\xe2\x99\xad");
+    symbol = cn.getUnicodeSymbol('n');
+    REQUIRE(*symbol == "\xe2\x99\xae");
 }
