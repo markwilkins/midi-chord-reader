@@ -55,6 +55,12 @@ void ChordView::paint(juce::Graphics &g)
 }
 
 
+/**
+ * @brief Draw the vertical bars to represent the measures
+ * 
+ * @param bars 
+ * @param g 
+ */
 void ChordView::drawMeasures(MeasurePositionType bars, juce::Graphics &g)
 {
     auto area = getLocalBounds();
@@ -85,24 +91,76 @@ void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g
     auto area = getLocalBounds();
     juce::Rectangle<float> textBox;
     textBox = area.toFloat();
-    g.setFont(25.0);
+    int spacer = 2;
     float ratio = textBox.getWidth() / chordClipper.getViewWidthInSeconds();
+    ChordName cn;
+
+    g.setFont(25.0);
+    auto ofont = g.getCurrentFont();
+    auto lfont = Font("Bravura Text", 25, Font::plain);
+    String fontName = lfont.getTypefaceName();
+    bool hasSymbols = true;
+    if (fontName != "Bravura Text")
+        hasSymbols = false;
 
     for (auto it = chords.begin(); it != chords.end(); ++it)
     {
         float leftPos = it->first * ratio;
         textBox.setLeft(leftPos);
-        g.drawText(it->second, textBox, juce::Justification::centredLeft);
+        if (!nameHasSymbols(it->second))
+        {
+            // no sharp/flat so we can just draw it with the default font
+            g.drawText(it->second, textBox, juce::Justification::centredLeft);
+        }
+        else
+        {
+            // There is at least one symbol (e.g., a flat) to draw in a separate font. This seems like
+            // a horrible kludge. There has to be a cleaner way to do this, but it is escaping me at the moment.
+            // So loop through and draw the symbols in the bravura font and the others in the default font
+            for (auto c = it->second.begin(); c != it->second.end(); ++c)
+            {
+                optional<string> symbol = cn.getUnicodeSymbol(*c);
+                if (hasSymbols && symbol != std::nullopt)
+                {
+                    // switch to the symbol font, draw the symbol and switch back
+                    g.setFont(lfont);
+                    g.drawText(*symbol, textBox, juce::Justification::centredLeft);
+                    textBox.setX(textBox.getX() + lfont.getStringWidthFloat(*symbol) + spacer);
+                    g.setFont(ofont);
+                }
+                else
+                {
+                    string s = {*c};
+                    g.drawText(s, textBox, juce::Justification::centredLeft);
+                    textBox.setX(textBox.getX() + ofont.getStringWidthFloat(s) + spacer);
+                }
+            }
+
+        }
 
     }
 
 }
 
 
+/**
+ * @brief Determine if a given chord has symbols that need to be mapped to a different
+ * font for display purposes
+ * 
+ * @param string chord 
+ * @return bool  true if it has one or more to be mapped, false if not
+ */
+bool ChordView::nameHasSymbols(string chord)
+{
+    if (chord.find('b') != string::npos || chord.find('#') != string::npos)
+        return true;
+    else
+        return false;
+
+}
+
 
 
 void ChordView::resized()
 {
-    // auto area = getLocalBounds();
-    // setBounds(area);
 }

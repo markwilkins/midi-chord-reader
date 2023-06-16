@@ -11,6 +11,7 @@
 
 #include "MidiStore.h"
 #include "ChordName.h"
+#include "MidiChordsTypes.h"
 
 using namespace juce;
 using namespace std;
@@ -656,7 +657,7 @@ vector <pair<float, string>> MidiStore::createStaticView()
     double prevTime = 0.0;
     string prevChord = "";
     ChordName cn;
-    vector<pair<float, string>> newStaticView;
+    ChordVectorType newStaticView;
 
     for (ValueTree::Iterator events = chordState.begin(); events != chordState.end(); ++events)
     {

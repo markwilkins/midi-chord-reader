@@ -382,14 +382,14 @@ TEST_CASE("view window", "storage")
     REQUIRE(chords == expected);
 
     chords = ms.getChordsInWindow({50.5, 51.3});
-    expected = {{50.5, "Dmin"}};
+    expected = {{50.5, "Dm"}};
     REQUIRE(chords == expected);
 
     chords = ms.getChordsInWindow({28.1, 51.3});
-    expected = {{30.4, "F/C"}, {50.5, "Dmin"}};
+    expected = {{30.4, "F/C"}, {50.5, "Dm"}};
     REQUIRE(chords == expected);
     chords = ms.getChordsInWindow({10.1, 51.3});
-    expected = {{10.1, "C"}, {30.4, "F/C"}, {50.5, "Dmin"}};
+    expected = {{10.1, "C"}, {30.4, "F/C"}, {50.5, "Dm"}};
     REQUIRE(chords == expected);
 
     chords = ms.getChordsInWindow({50.6, 100.1});
@@ -427,7 +427,7 @@ TEST_CASE("view update", "storage")
     ms.setLastViewUpdateTime(curTime - 1001);
     ms.updateStaticViewIfOutOfDate();
     chords = ms.getChordsInWindow({10.0, 10.0});
-    expected = {{10.0, "Cmin"}};
+    expected = {{10.0, "Cm"}};
     REQUIRE(chords == expected);
 }
 
