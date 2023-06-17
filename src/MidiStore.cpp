@@ -216,7 +216,27 @@ float MidiStore::getShortChordThreshold()
 {
     // default to half a second
     // Allowing up to 5 seconds here, but I'm setting the slider to be less currently
-    return getStateFloatProp(shortChordThresholdProp, 0.5, 0.0, 5.0);
+    return getStateFloatProp(shortChordThresholdProp, 0.5, 0.0, 2.0);
+}
+
+/**
+ * @brief Store the font size of the chord view
+ * 
+ * @param fontSize
+ */
+void MidiStore::setChordNameSize(float fontSize)
+{
+    setStateProp(chordNameSizeProp, fontSize);
+}
+
+/**
+ * @brief Retrieve font size
+ * 
+ * @return float 
+ */
+float MidiStore::getChordNameSize()
+{
+    return getStateFloatProp(chordNameSizeProp, 25, 5.0, 50.0);
 }
 
 /**

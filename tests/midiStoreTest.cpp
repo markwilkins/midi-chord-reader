@@ -160,6 +160,28 @@ TEST_CASE("test time width prop", "storage")
 
 }
 
+TEST_CASE("test chord size prop", "storage")
+{
+    MidiStore ms;
+    float size;
+
+    // default value
+    size = ms.getChordNameSize();
+    REQUIRE(size == 25.0);
+
+    ms.setChordNameSize(32.0);
+    size = ms.getChordNameSize();
+    REQUIRE(size == 32.0);
+
+    ms.setChordNameSize(150.0);
+    size = ms.getChordNameSize();
+    REQUIRE(size == 25.0);
+    ms.setChordNameSize(0.0);
+    size = ms.getChordNameSize();
+    REQUIRE(size == 25.0);
+}
+
+
 TEST_CASE("empty note slot", "storage")
 {
     MidiStore ms;
