@@ -21,7 +21,7 @@ ChordView::ChordView(MidiStore &ms) : chordClipper(ms), midiState(ms)
 {
     getLookAndFeel().setDefaultLookAndFeel(&lookAndFeel);
     getLookAndFeel().setColour(juce::ResizableWindow::backgroundColourId, juce::Colours::white);
-    setFramesPerSecond(30);
+    setFramesPerSecond(60);
 }
 
 
@@ -93,9 +93,12 @@ void ChordView::drawMeasures(MeasurePositionType bars, juce::Graphics &g)
     }
 
     // Hack - draw beat hashes for the first bar where the measure bar is not visible
-    float xPos = bars.begin()->second * ratio;
-    for (int i = 1; i < *bpMeasure; i++)
-        g.drawVerticalLine(static_cast<int>(xPos - i * beatWidth), 0, 20);
+    if (bars.begin() != bars.end()) 
+    {
+        float xPos = bars.begin()->second * ratio;
+        for (int i = 1; i < *bpMeasure; i++)
+            g.drawVerticalLine(static_cast<int>(xPos - i * beatWidth), 0, 20);
+    }
 
 
 }
