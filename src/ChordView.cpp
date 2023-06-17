@@ -19,6 +19,8 @@ using namespace juce;
 
 ChordView::ChordView(MidiStore &ms) : chordClipper(ms)
 {
+    getLookAndFeel().setDefaultLookAndFeel(&lookAndFeel);
+    getLookAndFeel().setColour(juce::ResizableWindow::backgroundColourId, juce::Colours::white);
     setFramesPerSecond(30);
 }
 
@@ -34,10 +36,8 @@ void ChordView::update()
 void ChordView::paint(juce::Graphics &g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    getLookAndFeel().setDefaultLookAndFeel(new juce::LookAndFeel_V3());
-    getLookAndFeel().setColour(juce::ResizableWindow::backgroundColourId, juce::Colours::white);
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-    
+
     g.setColour(juce::Colours::black);
     // Need to figure out how to make this thing draw its own border
     g.drawRect(getLocalBounds(), 1);

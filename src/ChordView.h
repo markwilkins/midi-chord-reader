@@ -39,6 +39,7 @@ public:
 
 private:
     ChordClipper chordClipper;
+    juce::LookAndFeel_V3 lookAndFeel;
     void drawChords(ChordVectorType chords, juce::Graphics &g);
     void drawMeasures(MeasurePositionType bars, juce::Graphics &g);
     bool nameHasSymbols(string chord);
