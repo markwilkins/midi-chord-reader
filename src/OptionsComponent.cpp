@@ -18,11 +18,6 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
 
     addAndMakeVisible(propsPanel);
 
-    recordingOnToggle.setButtonText("Record Notes");
-    propsPanel.addAndMakeVisible(&recordingOnToggle);
-    resetChordsButton.setButtonText("Clear Notes!");
-    propsPanel.addAndMakeVisible(&resetChordsButton);
-
     // juce tutorial of interest:  https://docs.juce.com/master/tutorial_slider_values.html
     propsPanel.addAndMakeVisible(&positionOfPlayheadSlider);
     positionOfPlayheadSlider.setRange(1.0, 99.0, 1.0);
@@ -41,11 +36,24 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
 
     // Minimum width (in seconds) for chords to display
     propsPanel.addAndMakeVisible(&shortChordSlider);
-    shortChordSlider.setRange(0.0, 2.5, 0.1);
+    shortChordSlider.setRange(0.0, 2.0, 0.1);
     shortChordSlider.setTextValueSuffix(" sec");
     shortChordLabel.attachToComponent(&shortChordSlider, true);
     propsPanel.addAndMakeVisible(shortChordLabel);
     shortChordLabel.setText("Minimum chord", juce::dontSendNotification);
+
+    // Size of the chord name font
+    propsPanel.addAndMakeVisible(&chordFontSizeSlider);
+    chordFontSizeSlider.setRange(5.0, 50.0, 1.0);
+    chordFontSizeSlider.setTextValueSuffix(" font");
+    chordFontSizeLabel.attachToComponent(&chordFontSizeSlider, true);
+    propsPanel.addAndMakeVisible(chordFontSizeLabel);
+    chordFontSizeLabel.setText("Font size", juce::dontSendNotification);
+
+    recordingOnToggle.setButtonText("Record Notes");
+    propsPanel.addAndMakeVisible(&recordingOnToggle);
+    resetChordsButton.setButtonText("Clear Notes!");
+    propsPanel.addAndMakeVisible(&resetChordsButton);
 
     // click handler lambdas
     resetChordsButton.onClick = [this] { resetClick(); };
@@ -60,6 +68,11 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
 
     shortChordSlider.onValueChange = [this] { adjustShortChordThreshold(shortChordSlider.getValue()); };
     shortChordSlider.setValue(ms.getShortChordThreshold(), juce::sendNotification);
+
+    chordFontSizeSlider.onValueChange = [this] { adjustChordFontSize(chordFontSizeSlider.getValue()); };
+    chordFontSizeSlider.setValue(ms.getChordNameSize(), juce::sendNotification);
+
+    this->resized();
 }
 
 /**
@@ -67,7 +80,6 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
  */
 void OptionsComponent::resetClick()
 {
-    DBG("Reset click happened");
     midiState.clear();
 }
 
@@ -97,6 +109,11 @@ void OptionsComponent::adjustShortChordThreshold(double value)
     midiState.setShortChordThreshold(static_cast<float>(value));
 }
 
+void OptionsComponent::adjustChordFontSize(double value)
+{
+    midiState.setChordNameSize(static_cast<float>(value));
+}
+
 void OptionsComponent::recordingClick(bool state)
 {
     midiState.allowStateChange(state);
@@ -114,14 +131,16 @@ void OptionsComponent::resized() // override
     int column;
 
     propsPanel.setBounds(area);
-    // recordingOnToggle.setBounds(resetChordsButton.getBounds().getWidth() + 40, area.getHeight() / 2 - buttonHeight / 2, 100, buttonHeight);
-    recordingOnToggle.setBounds(20, area.getHeight() / 3 - buttonHeight / 2, 100, buttonHeight);
-    resetChordsButton.setBounds(20, area.getHeight() * 2 / 3 - buttonHeight / 2, 100, buttonHeight);
-
-    column = resetChordsButton.getBounds().getWidth() + 150;
+    column = timeWidthLabel.getWidth() + 60;
     positionOfPlayheadSlider.setBounds(column, area.getHeight() / 3 - buttonHeight / 2, 200, buttonHeight);
     timeWidthSlider.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 200, buttonHeight);
 
     column += positionOfPlayheadSlider.getBounds().getWidth() + 150;
     shortChordSlider.setBounds(column, area.getHeight() / 3 - buttonHeight / 2, 200, buttonHeight);
+    chordFontSizeSlider.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 200, buttonHeight);
+
+    // put these on the right hand side
+    column = area.getWidth() - recordingOnToggle.getWidth() - 40;
+    recordingOnToggle.setBounds(column, area.getHeight() / 3 - buttonHeight / 2, 100, buttonHeight);
+    resetChordsButton.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 100, buttonHeight);
 }

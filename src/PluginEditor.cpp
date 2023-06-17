@@ -20,7 +20,8 @@ MidiChordsAudioProcessorEditor::MidiChordsAudioProcessorEditor (MidiChordsAudioP
     : AudioProcessorEditor (&p), juce::Timer(), audioProcessor (p), options(ms), chordView(ms)
 {
     setResizable(true, true);
-    setSize (1000, 400);
+    // To see the debug controls, make the height 400 here
+    setSize (1000, 210);
 
 
     lastTimeStamp.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
@@ -70,16 +71,14 @@ void MidiChordsAudioProcessorEditor::timerCallback()
     //    have only one parent, so I suspect that is a simple operation.
     options.refreshControlState();
 
-    // and I cannot remember why this repaint call is here. Early version from one of the tutorials? Is it still needed?
-    repaint();
-
-    std::string info = "";
 
     MidiStore *ms = audioProcessor.getMidiState();
     ms->updateStaticViewIfOutOfDate();
 
     debugInfo1.setText("visible chord count: " + std::to_string(ms->getViewWindowChordCount()), juce::NotificationType::sendNotification);
+
     /*
+    std::string info = "";
     std::vector<int64> eventTimes = ms->getEventTimes();
     for (std::vector<int64>::iterator i = eventTimes.begin(); i != eventTimes.end(); ++i) 
     {
@@ -119,6 +118,10 @@ void MidiChordsAudioProcessorEditor::resized()
     lastTimeStamp.setBounds(10, 10, 100, 30);
     debugInfo1.setBounds(10, 40, getWidth() - 10, 30);
     currentChords.setBounds(10, 70, getWidth() - 10, 60);
+    // Make this bigger to be able to see the debug info. Probably will remove this
+    // stuff at some point
+    int debugInfoSize = 0;
+
     options.setBounds(0, getHeight() - 100, getWidth(), 100);
-    chordView.setBounds(0, getHeight() - 200, getWidth(), 100);
+    chordView.setBounds(0, debugInfoSize + 10, getWidth(), getHeight() - (debugInfoSize + 120));
 }

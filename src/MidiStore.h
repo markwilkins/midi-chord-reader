@@ -53,6 +53,7 @@ public:
     inline static const char* playHeadPositionProp = "playheadPosition";
     inline static const char* viewWidthProp = "viewWidthProp";
     inline static const char* shortChordThresholdProp = "shortChordThresholdProp";
+    inline static const char* chordNameSizeProp = "chordNameSizeProp";
 
 
 
@@ -89,6 +90,8 @@ public:
     float getTimeWidth();
     void setShortChordThreshold(float threshold);
     float getShortChordThreshold();
+    void setChordNameSize(float fontSize);
+    float getChordNameSize();
     void setBPMinute(double bpm);
     optional<double> getBPMinute();
     void setBPMeasure(int bpmeasure);
