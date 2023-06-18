@@ -22,6 +22,12 @@ ChordName::~ChordName()
 {
 }
 
+/**
+ * @brief For a given set of notes, retrieve the chord name
+ * 
+ * @param vector<int> notes 
+ * @return string 
+ */
 string ChordName::nameChord(vector<int> notes)
 {
     if (notes.size() == 0)

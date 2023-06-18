@@ -21,7 +21,7 @@ FetchContent_MakeAvailable(JUCE)
 # If you are building a VST2 or AAX plugin, CMake needs to be told where to find these SDKs on your
 # system. This setup should be done before calling `juce_add_plugin`.
 
-# juce_set_vst2_sdk_path(...)
+juce_set_vst2_sdk_path("build/_deps/juce-src/modules/juce_audio_processors/format_types/VST3_SDK")
 # juce_set_aax_sdk_path(...)
 
 # `juce_add_plugin` adds a static library target with the name passed as the first argument
@@ -43,7 +43,7 @@ juce_add_plugin(MidiChords
     COPY_PLUGIN_AFTER_BUILD TRUE                # Should the plugin be installed to a default location after building?
     PLUGIN_MANUFACTURER_CODE Ttra               # A four-character manufacturer id with at least one upper-case character
     PLUGIN_CODE tmc1                            # A unique four-character plugin id with at least one upper-case character
-    FORMATS AU Standalone                       # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
+    FORMATS AU Standalone VST3                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
     PRODUCT_NAME "MidiChords")                  # The name of the final executable, which can differ from the target name
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
@@ -56,7 +56,6 @@ juce_generate_juce_header(MidiChords)
 
 include_directories (
         src
-        # build/_deps/juce-src/modules
 )
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the
@@ -92,7 +91,7 @@ target_compile_definitions(MidiChords
 
 # TODO: I added this to try to make the debugger show strings. Doesn't work for me: https://github.com/vadimcn/codelldb/issues/415
 # If I leave this in, I need to make sure it is only added for debug builds (some kind of IF logic in this file)
-add_compile_options(-fstandalone-debug -g)
+# add_compile_options(-fstandalone-debug -g)
 
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional

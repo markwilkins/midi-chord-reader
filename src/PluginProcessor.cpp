@@ -193,31 +193,10 @@ void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
             midiState.addNoteEventAtTime(messageEventTime, noteNumber, false);
             midiState.setEventTimeSeconds(messageEventTime, posOfBlock.second);
         }
-        if (message.isMidiClock())
-        {
-            DBG("Midi clock event");
-        }
-        if (message.isMidiStart())
-        {
-            DBG("Midi start event");
-        }
-        if (message.isMidiStop())
-        {
-            DBG("Midi stop event");
-        }
-        else
-        {
-            //double ts = message.getTimeStamp();
-            //message.getDescription();
-            //DBG("note not on or off " + std::to_string(ts));
-            //DBG("Other type: " + message.getDescription());
-
-        }
         //juce::String raw = String::toHexString(message.getRawData(), message.getRawDataSize());
         //juce::String raw = String::toHexString(message.getSysExData(), message.getSysExDataSize());
         //DBG("Raw: " + raw);
     }
-    // midiMessages.clear(0, 1000);
 
 }
 

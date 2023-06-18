@@ -45,7 +45,7 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
     // Size of the chord name font
     propsPanel.addAndMakeVisible(&chordFontSizeSlider);
     chordFontSizeSlider.setRange(5.0, 50.0, 1.0);
-    chordFontSizeSlider.setTextValueSuffix(" font");
+    chordFontSizeSlider.setTextValueSuffix(" pt");
     chordFontSizeLabel.attachToComponent(&chordFontSizeSlider, true);
     propsPanel.addAndMakeVisible(chordFontSizeLabel);
     chordFontSizeLabel.setText("Font size", juce::dontSendNotification);

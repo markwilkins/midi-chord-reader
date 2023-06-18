@@ -24,7 +24,6 @@ MidiStore::MidiStore() : chordState("name")
 
 MidiStore::~MidiStore()
 {
-    //delete chordState;
 }
 
 /**

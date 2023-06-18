@@ -16,8 +16,6 @@ using namespace std;
 
 ChordClipper::ChordClipper(MidiStore &ms) : midiState(ms)
 {
-    // Extract state info
-    // ms.getPlayHeadPosition ...
 }
 
 /**
@@ -126,6 +124,8 @@ ChordVectorType ChordClipper::getChordsToDisplay()
     vector<pair<float, string>> newChords;
     float offset = viewWindow.first;
 
+    // include a couple extra seconds on both ends to smooth out display as things to out of view
+    // Probably really only need the first extra two seconds
     viewWindow.first -= 2.0f;
     viewWindow.second += 2.0f;
 
@@ -144,6 +144,12 @@ ChordVectorType ChordClipper::getChordsToDisplay()
     return chords;
 }
 
+/**
+ * @brief Add in new chords to the existing list (and remove ones that are off the radar)
+ * 
+ * @param viewWindow 
+ * @param newChords 
+ */
 void ChordClipper::constructDisplayedChords(ViewWindowType viewWindow, ChordVectorType newChords)
 {
     if (!hasForwardOverlap(viewWindow))

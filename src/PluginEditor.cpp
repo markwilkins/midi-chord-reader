@@ -44,6 +44,7 @@ MidiChordsAudioProcessorEditor::~MidiChordsAudioProcessorEditor()
 
 void MidiChordsAudioProcessorEditor::timerCallback()
 {
+    // some debug stuff that is hidden unless debugInfoSize is adjusted below
     juce::String text;
     std::unordered_set<juce::String>::iterator it;
     text = "8:26 last: " + audioProcessor.lastNote + ": ";
