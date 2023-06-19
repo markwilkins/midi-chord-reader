@@ -21,14 +21,18 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
 
     // juce tutorial of interest:  https://docs.juce.com/master/tutorial_slider_values.html
     propsPanel.addAndMakeVisible(&positionOfPlayheadSlider);
+    setSliderColors(positionOfPlayheadSlider);
+    positionOfPlayheadSlider.setHelpText("This is my help text. I hope it helps");
     positionOfPlayheadSlider.setRange(1.0, 99.0, 1.0);
     positionOfPlayheadSlider.setTextValueSuffix(" %");
     playheadLabel.attachToComponent(&positionOfPlayheadSlider, true);
     propsPanel.addAndMakeVisible(playheadLabel);
     playheadLabel.setText("Playhead", juce::dontSendNotification);
+    
 
     // The number of seconds represented by the window
     propsPanel.addAndMakeVisible(&timeWidthSlider);
+    setSliderColors(timeWidthSlider);
     timeWidthSlider.setRange(4.0, 30.0, 1.0);
     timeWidthSlider.setTextValueSuffix(" sec");
     timeWidthLabel.attachToComponent(&timeWidthSlider, true);
@@ -37,6 +41,7 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
 
     // Minimum width (in seconds) for chords to display
     propsPanel.addAndMakeVisible(&shortChordSlider);
+    setSliderColors(shortChordSlider);
     shortChordSlider.setRange(0.0, 2.0, 0.01);
     shortChordSlider.setTextValueSuffix(" sec");
     shortChordLabel.attachToComponent(&shortChordSlider, true);
@@ -45,6 +50,7 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
 
     // Size of the chord name font
     propsPanel.addAndMakeVisible(&chordFontSizeSlider);
+    setSliderColors(chordFontSizeSlider);
     chordFontSizeSlider.setRange(5.0, 50.0, 1.0);
     chordFontSizeSlider.setTextValueSuffix(" pt");
     chordFontSizeLabel.attachToComponent(&chordFontSizeSlider, true);
@@ -74,6 +80,20 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
     chordFontSizeSlider.setValue(ms.getChordNameSize(), juce::sendNotification);
 
     this->resized();
+}
+
+/**
+ * @brief Set the text color of the slider to black and background to white
+ * I have something messed up with the looknfeel or something. If I don't do this, the slider text is white, but if I
+ * open a second plugin instance (the editor) within the app, then they suddenly change to black on white. This makes
+ * them black on white from the get go. dunno ¯\_(ツ)_/¯
+ *
+ * @param slider
+ */
+void OptionsComponent::setSliderColors(juce::Slider &slider) 
+{
+    slider.setColour(Slider::textBoxTextColourId, Colours::black);
+    slider.setColour(Slider::textBoxBackgroundColourId, Colours::white);
 }
 
 /**
