@@ -17,6 +17,7 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
     propsPanel.setColour(juce::GroupComponent::ColourIds::outlineColourId, juce::Colours::darkgrey);
 
     addAndMakeVisible(propsPanel);
+    getLookAndFeel().setColour(juce::Slider::textBoxTextColourId, juce::Colours::black);
 
     // juce tutorial of interest:  https://docs.juce.com/master/tutorial_slider_values.html
     propsPanel.addAndMakeVisible(&positionOfPlayheadSlider);
@@ -36,7 +37,7 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
 
     // Minimum width (in seconds) for chords to display
     propsPanel.addAndMakeVisible(&shortChordSlider);
-    shortChordSlider.setRange(0.0, 2.0, 0.1);
+    shortChordSlider.setRange(0.0, 2.0, 0.01);
     shortChordSlider.setTextValueSuffix(" sec");
     shortChordLabel.attachToComponent(&shortChordSlider, true);
     propsPanel.addAndMakeVisible(shortChordLabel);
@@ -84,7 +85,7 @@ void OptionsComponent::resetClick()
 }
 
 /**
- * @brief Update the controls to the current settings in the state tre
+ * @brief Update the controls to the current settings in the state tree
  */
 void OptionsComponent::refreshControlState()
 {
@@ -121,7 +122,10 @@ void OptionsComponent::recordingClick(bool state)
 
 void OptionsComponent::paint(juce::Graphics &g) // override
 {
+    propsPanel.setColour(juce::GroupComponent::ColourIds::outlineColourId, juce::Colours::lightgrey);
+    getLookAndFeel().setColour(juce::Slider::textBoxTextColourId, juce::Colours::black);
     g.fillAll(juce::Colours::lightgrey);
+    g.setColour(juce::Colours::black);
 }
 
 void OptionsComponent::resized() // override

@@ -19,8 +19,6 @@ using namespace juce;
 
 ChordView::ChordView(MidiStore &ms) : chordClipper(ms), midiState(ms)
 {
-    getLookAndFeel().setDefaultLookAndFeel(&lookAndFeel);
-    getLookAndFeel().setColour(juce::ResizableWindow::backgroundColourId, juce::Colours::white);
     setFramesPerSecond(60);
 }
 
@@ -36,6 +34,7 @@ void ChordView::update()
 void ChordView::paint(juce::Graphics &g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
+    getLookAndFeel().setColour(juce::ResizableWindow::backgroundColourId, juce::Colours::white);
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
     g.setColour(juce::Colours::black);
@@ -123,6 +122,7 @@ void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g
     int fontSize = static_cast<int>(midiState.getChordNameSize());
     g.setFont(fontSize);
     auto ofont = g.getCurrentFont();
+    ofont.setExtraKerningFactor(static_cast<float>(-0.05));
     auto lfont = Font("Bravura Text", fontSize, Font::plain);
     String fontName = lfont.getTypefaceName();
     bool hasSymbols = true;

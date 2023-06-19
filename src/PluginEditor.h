@@ -29,6 +29,7 @@ public:
     void timerCallback() override;
 
 private:
+    juce::LookAndFeel_V3 lookAndFeel;
 
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.

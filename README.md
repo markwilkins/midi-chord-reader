@@ -9,6 +9,8 @@ The reason I created this is because my ear for music is not very good and I cre
 
 The plugin "company" name is `tetrachord` and the plugin name is `MidiChords`
 
+![Example view](/images/image1.png)
+
 # Building
 I am building this using cmake. It integrates nicely with VSCode. Note that the first cmake call will download JUCE, so it might take a bit. If you already have JUCE downloaded somewhere, update the CMakeLists.txt file to point to it to save time and space.
 
