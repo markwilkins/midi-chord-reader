@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(MIDICHORDS VERSION 0.0.1)
+project(MidiChords VERSION 0.1.0) 
+
+# Generate the config file that contains the version info
+configure_file(src/MidiChordsConfig.h.in MidiChordsConfig.h)
+
 
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
@@ -52,10 +56,12 @@ juce_add_plugin(MidiChords
 # include all your JUCE module headers; if you're happy to include module headers directly, you
 # probably don't need to call this.
 
-juce_generate_juce_header(MidiChords)
+juce_generate_juce_header(MidiChords) 
 
 include_directories (
-        src
+        src 
+        # This adds the build directory (e.g., build or release) to the include path (makes the MidiChordsConfig.h be found)
+        "${PROJECT_BINARY_DIR}"
 )
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the
@@ -72,6 +78,7 @@ target_sources(MidiChords
         src/ChordName.cpp
         src/ChordView.cpp
         src/ChordClipper.cpp
+        src/AboutBox.cpp
         )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer

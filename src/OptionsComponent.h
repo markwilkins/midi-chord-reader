@@ -13,6 +13,7 @@
 
 #include <JuceHeader.h>
 #include "MidiStore.h"
+#include "AboutBox.h"
 
 /**
  * @brief Provide a set of controls for affecting the behavior of the plugin
@@ -28,12 +29,15 @@ public:
     void adjustTimeWidth(double value);
     void adjustShortChordThreshold(double value);
     void adjustChordFontSize(double value);
+    void showAboutBox();
 
     void recordingClick(bool state);
+
 
     void refreshControlState();
 
 private:
+    MidiStore &midiState;
     juce::GroupComponent propsPanel;
     juce::TextButton resetChordsButton;
     juce::ToggleButton recordingOnToggle;
@@ -45,9 +49,10 @@ private:
     juce::Slider shortChordSlider;
     juce::Label chordFontSizeLabel;
     juce::Slider chordFontSizeSlider;
-    void paint(juce::Graphics &g) override;
-    MidiStore &midiState;
+    juce::TextButton aboutBoxButton;
+    AboutBox aboutBox;
 
+    void paint(juce::Graphics &g) override;
     void resized() override;
     void setSliderColors(juce::Slider &slider);
 

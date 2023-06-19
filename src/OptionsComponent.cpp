@@ -9,6 +9,7 @@
  */
 
 #include "OptionsComponent.h"
+#include "AboutBox.h"
 
 using namespace juce;
 
@@ -79,6 +80,10 @@ OptionsComponent::OptionsComponent(MidiStore &ms) : midiState(ms)
     chordFontSizeSlider.onValueChange = [this] { adjustChordFontSize(chordFontSizeSlider.getValue()); };
     chordFontSizeSlider.setValue(ms.getChordNameSize(), juce::sendNotification);
 
+    propsPanel.addAndMakeVisible(&aboutBoxButton);
+    aboutBoxButton.setButtonText("About...");
+    aboutBoxButton.onClick = [this] { showAboutBox(); };
+
     this->resized();
 }
 
@@ -140,6 +145,11 @@ void OptionsComponent::recordingClick(bool state)
     midiState.allowStateChange(state);
 }
 
+void OptionsComponent::showAboutBox()
+{
+    DialogWindow::showDialog("", &aboutBox, nullptr, Colours::white, true, false, false);
+}
+
 void OptionsComponent::paint(juce::Graphics &g) // override
 {
     propsPanel.setColour(juce::GroupComponent::ColourIds::outlineColourId, juce::Colours::lightgrey);
@@ -166,5 +176,8 @@ void OptionsComponent::resized() // override
     // put these on the right hand side
     column = area.getWidth() - recordingOnToggle.getWidth() - 40;
     recordingOnToggle.setBounds(column, area.getHeight() / 3 - buttonHeight / 2, 100, buttonHeight);
-    resetChordsButton.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 100, buttonHeight);
+    resetChordsButton.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 100, 30);
+
+    aboutBoxButton.setOpaque(false);
+    aboutBoxButton.setBounds(0, area.getHeight() - 15, 50, 15);
 }
