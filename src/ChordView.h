@@ -40,7 +40,6 @@ public:
 private:
     ChordClipper chordClipper;
     MidiStore &midiState;
-    juce::LookAndFeel_V3 lookAndFeel;
     void drawChords(ChordVectorType chords, juce::Graphics &g);
     void drawMeasures(MeasurePositionType bars, juce::Graphics &g);
     bool nameHasSymbols(string chord);

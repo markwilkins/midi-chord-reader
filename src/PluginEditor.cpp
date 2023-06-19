@@ -19,6 +19,7 @@ using std::unordered_set;
 MidiChordsAudioProcessorEditor::MidiChordsAudioProcessorEditor (MidiChordsAudioProcessor& p, MidiStore& ms)
     : AudioProcessorEditor (&p), juce::Timer(), audioProcessor (p), options(ms), chordView(ms)
 {
+    getLookAndFeel().setDefaultLookAndFeel(&lookAndFeel);
     setResizable(true, true);
     // To see the debug controls, make the height 400 here
     setSize (1000, 210);
