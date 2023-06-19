@@ -1,0 +1,4 @@
+// This is used by cmake. Results in a file in the build dir of name MidiChordsConfig.h
+#define MidiChords_VERSION_MAJOR @MidiChords_VERSION_MAJOR@
+#define MidiChords_VERSION_MINOR @MidiChords_VERSION_MINOR@
+#define MidiChords_VERSION_PATCH @MidiChords_VERSION_PATCH@

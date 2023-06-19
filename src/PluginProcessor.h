@@ -76,7 +76,6 @@ private:
     juce::String programName = "";
     double currentSampleRate = 0.0;
     int currentSamplesPerBlock;
-    juce::MemoryBlock *stateInfo = nullptr;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MidiChordsAudioProcessor)
