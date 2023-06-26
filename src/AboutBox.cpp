@@ -32,7 +32,7 @@ AboutBox::AboutBox()
 
     addAndMakeVisible(myOwnName);
 
-    myOwnName.setText("Copyright \xa9 2023, Mark Wilkins", juce::dontSendNotification);
+    myOwnName.setText(String(CharPointer_UTF8("Copyright \xc2\xa9 2023, Mark Wilkins")), juce::dontSendNotification);
     myOwnName.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(myGitLink);
     myGitLink.setButtonText("https://github.com/markwilkins/midi-chord-reader");

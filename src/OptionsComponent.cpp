@@ -161,23 +161,24 @@ void OptionsComponent::paint(juce::Graphics &g) // override
 void OptionsComponent::resized() // override
 {
     auto area = getLocalBounds();
-    int buttonHeight = 40;
+    int controlHeight = 40;
+    int buttonHeight = 30;
     int column;
 
     propsPanel.setBounds(area);
     column = timeWidthLabel.getWidth() + 60;
-    positionOfPlayheadSlider.setBounds(column, area.getHeight() / 3 - buttonHeight / 2, 200, buttonHeight);
-    timeWidthSlider.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 200, buttonHeight);
+    positionOfPlayheadSlider.setBounds(column, area.getHeight() / 3 - controlHeight / 2, 200, controlHeight);
+    timeWidthSlider.setBounds(column, area.getHeight() * 2 / 3 - controlHeight / 2, 200, controlHeight);
 
-    column += positionOfPlayheadSlider.getBounds().getWidth() + 150;
-    shortChordSlider.setBounds(column, area.getHeight() / 3 - buttonHeight / 2, 200, buttonHeight);
-    chordFontSizeSlider.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 200, buttonHeight);
+    column += positionOfPlayheadSlider.getBounds().getWidth() + 125;
+    shortChordSlider.setBounds(column, area.getHeight() / 3 - controlHeight / 2, 200, controlHeight);
+    chordFontSizeSlider.setBounds(column, area.getHeight() * 2 / 3 - controlHeight / 2, 200, controlHeight);
 
-    // put these on the right hand side
-    column = area.getWidth() - recordingOnToggle.getWidth() - 40;
-    recordingOnToggle.setBounds(column, area.getHeight() / 3 - buttonHeight / 2, 100, buttonHeight);
-    resetChordsButton.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 100, 30);
+    column = shortChordSlider.getBounds().getTopLeft().getX() + shortChordSlider.getBounds().getWidth() + 30;
+    recordingOnToggle.setBounds(column, area.getHeight() / 3 - controlHeight / 2, 100, controlHeight);
+    resetChordsButton.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 100, buttonHeight);
 
-    aboutBoxButton.setOpaque(false);
-    aboutBoxButton.setBounds(0, area.getHeight() - 15, 50, 15);
+    // this "sticks" the about... button to the right hand side
+    column = area.getWidth() - 125;
+    aboutBoxButton.setBounds(column, area.getHeight() * 2 / 3 - buttonHeight / 2, 100, buttonHeight);
 }

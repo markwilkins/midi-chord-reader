@@ -791,7 +791,7 @@ void MidiStore::updateStaticViewIfOutOfDate()
         // otherwise do an update only at most once per second
         if (curTime - this->lastViewUpdateTime > 1000)
         {
-            DBG("Updating static view at time " + to_string(curTime));
+            // DBG("Updating static view at time " + to_string(curTime));
             this->updateStaticView();
             this->lastViewUpdateTime = curTime;  // yeah ... not entirely accurate but close enough
             this->isViewUpToDate = true;

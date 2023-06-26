@@ -20,6 +20,7 @@ using namespace juce;
 ChordView::ChordView(MidiStore &ms) : chordClipper(ms), midiState(ms)
 {
     setFramesPerSecond(60);
+    this->symbolFontAvailable = this->checkForBravura();
 }
 
 
@@ -121,19 +122,15 @@ void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g
 
     int fontSize = static_cast<int>(midiState.getChordNameSize());
     g.setFont(fontSize);
-    auto ofont = g.getCurrentFont();
-    ofont.setExtraKerningFactor(static_cast<float>(-0.05));
-    auto lfont = Font("Bravura Text", fontSize, Font::plain);
-    String fontName = lfont.getTypefaceName();
-    bool hasSymbols = true;
-    if (fontName != "Bravura Text")
-        hasSymbols = false;
+    Font defaultFont = g.getCurrentFont();
+    defaultFont.setExtraKerningFactor(static_cast<float>(-0.05));
+    Font symbolFont = Font("Bravura Text", fontSize, Font::plain);
 
     for (auto it = chords.begin(); it != chords.end(); ++it)
     {
         float leftPos = it->first * ratio;
         textBox.setLeft(leftPos);
-        if (!hasSymbols || !nameHasSymbols(it->second))
+        if (!this->symbolFontAvailable || !nameHasSymbols(it->second))
         {
             // no sharp/flat so we can just draw it with the default font
             g.drawText(it->second, textBox, juce::Justification::centredLeft);
@@ -152,14 +149,14 @@ void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g
                     if (sPart != "") {
                         // Draw what we have collected so far
                         g.drawText(sPart, textBox, juce::Justification::centredLeft);
-                        textBox.setX(textBox.getX() + ofont.getStringWidthFloat(sPart) + spacer);
+                        textBox.setX(textBox.getX() + defaultFont.getStringWidthFloat(sPart) + spacer);
                         sPart = "";
                     }
                     // switch to the symbol font, draw the symbol and switch back
-                    g.setFont(lfont);
+                    g.setFont(symbolFont);
                     g.drawText(*symbol, textBox, juce::Justification::centredLeft);
-                    textBox.setX(textBox.getX() + lfont.getStringWidthFloat(*symbol) + spacer);
-                    g.setFont(ofont);
+                    textBox.setX(textBox.getX() + symbolFont.getStringWidthFloat(*symbol) + spacer);
+                    g.setFont(defaultFont);
                 }
                 else
                 {
@@ -192,6 +189,24 @@ bool ChordView::nameHasSymbols(string chord)
 }
 
 
+/**
+ * @brief Determine if the font that supports the flat/sharp symbols is available. This seems a bad way to do
+ * this, but I can't figure out how to simply check for a given font. So readm them all once. This only gets
+ * called once each time the plugin editor is loaded, so it doesn't suck too much.
+ * 
+ * @return bool  return true if bravura text appears to exist
+ */
+bool ChordView::checkForBravura()
+{
+    // try to figure out if the Bravura font is installed
+    juce::StringArray fonts = Font::findAllTypefaceNames();
+    for (auto it = fonts.begin(); it != fonts.end(); ++it)
+    {
+        if (*it == "Bravura Text")
+            return true;
+    }
+    return false;
+}
 
 void ChordView::resized()
 {

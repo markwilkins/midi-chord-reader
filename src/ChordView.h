@@ -38,11 +38,14 @@ public:
     void resized() override;
 
 private:
+    // flag that indicates if the bravura font available (for flat/sharp symbols)
+    bool symbolFontAvailable = false;
     ChordClipper chordClipper;
     MidiStore &midiState;
     void drawChords(ChordVectorType chords, juce::Graphics &g);
     void drawMeasures(MeasurePositionType bars, juce::Graphics &g);
     bool nameHasSymbols(string chord);
+    bool checkForBravura();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChordView)
 };
