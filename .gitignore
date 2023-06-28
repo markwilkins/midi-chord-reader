@@ -35,6 +35,7 @@ build/
 release/
 
 Testing/
+instimages/
 
 .vscode/launch.json
 .vscode/settings.json

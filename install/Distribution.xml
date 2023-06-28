@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<installer-script>
+    <options/>
+    <title>MidiChords</title>
+    <choices-outline>
+        <line choice="installer_choice_1"/>
+        <line choice="installer_choice_2"/>
+    </choices-outline>
+    <choice id="installer_choice_1" title="MidiChords AU" description="">
+        <pkg-ref id="com.tetrachord.pkg.AU"/>
+    </choice>
+    <choice id="installer_choice_2" title="MidiChords VST3" description="">
+        <pkg-ref id="com.tetrachord.pkg.VST3"/>
+    </choice>
+	<pkg-ref id="com.tetrachord.pkg.AU">MidiChords_AU.pkg</pkg-ref>
+	<pkg-ref id="com.tetrachord.pkg.VST3">MidiChords_VST3.pkg</pkg-ref>
+</installer-script>
