@@ -21,17 +21,8 @@ MidiChordsAudioProcessorEditor::MidiChordsAudioProcessorEditor (MidiChordsAudioP
 {
     getLookAndFeel().setDefaultLookAndFeel(&lookAndFeel);
     setResizable(true, true);
-    // To see the debug controls, make the height 400 here
     setSize (1000, 210);
 
-
-    lastTimeStamp.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
-    debugInfo1.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
-    currentChords.setColour(juce::Label::ColourIds::textColourId, juce::Colours::black);
-
-    addAndMakeVisible(&lastTimeStamp);
-    addAndMakeVisible(&debugInfo1);
-    addAndMakeVisible(&currentChords);
     addAndMakeVisible(&options);
     addAndMakeVisible(&chordView);
 
@@ -45,22 +36,12 @@ MidiChordsAudioProcessorEditor::~MidiChordsAudioProcessorEditor()
 
 void MidiChordsAudioProcessorEditor::timerCallback()
 {
-    // some debug stuff that is hidden unless debugInfoSize is adjusted below
-    juce::String text;
-    std::unordered_set<juce::String>::iterator it;
-    text = "8:26 last: " + audioProcessor.lastNote + ": ";
-    for (it = audioProcessor.currentNotes.begin(); it != audioProcessor.currentNotes.end(); it++) {
-        text = text + " " + *it;
-    }
 
     // The setDirty method for vst3 has this bit of code for setting dirty. I don't think it works, but leaving
     // it here for further testing when I feel like it. If I figure out that it does work, then I need to set
     // this when actual changes occur (e.g., when isViewUpToDate is set to false and for props like allowStateChange)
     // this->audioProcessor.updateHostDisplay(AudioPluginInstance::ChangeDetails{}.withNonParameterStateChanged(true));
 
-    juce::String lastTime = std::to_string(audioProcessor.lastEventTime);
-    juce::String lastTimestampValue = std::to_string((int64)(audioProcessor.lastEventTimestamp));
-    lastTimeStamp.setText("lasttime: " + lastTimestampValue, juce::NotificationType::sendNotification);
 
     // This is very cheesy - refresh the control settings in case the state has changed. I need to figure
     // out the listener stuff better. But there are very few controls, so not expensive
@@ -76,28 +57,6 @@ void MidiChordsAudioProcessorEditor::timerCallback()
 
     MidiStore *ms = audioProcessor.getMidiState();
     ms->updateStaticViewIfOutOfDate();
-
-    debugInfo1.setText("visible chord count: " + std::to_string(ms->getViewWindowChordCount()), juce::NotificationType::sendNotification);
-
-    /*
-    std::string info = "";
-    std::vector<int64> eventTimes = ms->getEventTimes();
-    for (std::vector<int64>::iterator i = eventTimes.begin(); i != eventTimes.end(); ++i) 
-    {
-        // info += std::to_string(*i) + ", ";
-        vector<int> itNotes = ms->getAllNotesOnAtTime(0, *i);
-        lastChord = cn.nameChord(itNotes);
-        if (lastChord != "") 
-        {
-            double seconds = ms->getEventTimeInSeconds(*i);
-            ostringstream oss;
-            oss << info << lastChord << " (" << *i << ", " << seconds << "), ";
-            info = oss.str();
-        }
-    }
-    currentChords.setText("all chords: " + info, juce::NotificationType::sendNotification);
-    */
-
 
 }
 
@@ -117,13 +76,6 @@ void MidiChordsAudioProcessorEditor::paint (juce::Graphics& g)
 void MidiChordsAudioProcessorEditor::resized()
 {
     // sets the position and size of the slider with arguments (x, y, width, height)
-    lastTimeStamp.setBounds(10, 10, 100, 30);
-    debugInfo1.setBounds(10, 40, getWidth() - 10, 30);
-    currentChords.setBounds(10, 70, getWidth() - 10, 60);
-    // Make this bigger to be able to see the debug info. Probably will remove this
-    // stuff at some point
-    int debugInfoSize = 0;
-
     options.setBounds(0, getHeight() - 100, getWidth(), 100);
-    chordView.setBounds(0, debugInfoSize + 10, getWidth(), getHeight() - (debugInfoSize + 120));
+    chordView.setBounds(0, 10, getWidth(), getHeight() - 120);
 }

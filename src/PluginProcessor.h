@@ -60,11 +60,6 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     
-    juce::String lastNote;
-    int lastEventTime = 0;
-    int64 lastEventTimestamp = 0;
-    std::unordered_set<juce::String> currentNotes;
-
     MidiStore* getMidiState() { return &midiState; }
 
 private:

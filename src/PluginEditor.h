@@ -35,11 +35,6 @@ private:
     // access the processor object that created it.
     MidiChordsAudioProcessor& audioProcessor;
 
-    // some debug info placeholders
-    juce::Label currentChords;
-    juce::Label lastTimeStamp;
-    juce::Label debugInfo1;
-
     OptionsComponent options;
     ChordView chordView;
 
