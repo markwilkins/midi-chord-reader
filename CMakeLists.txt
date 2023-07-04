@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(MidiChords VERSION 0.8.0) 
+project(MidiChords VERSION 0.8.1)
 
 # Generate the config file that contains the version info
 configure_file(src/MidiChordsConfig.h.in MidiChordsConfig.h)
