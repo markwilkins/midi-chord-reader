@@ -4,7 +4,7 @@
 # https://forum.juce.com/t/vst-installer/16654/15?page=2
 
 name="MidiChords"
-version="0.8.0"
+version="0.8.1"
 
 mkdir au
 cp -R ~/Library/Audio/Plug-Ins/Components/$name.component au
