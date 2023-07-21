@@ -30,6 +30,7 @@ public:
     MeasurePositionType getMeasuresToDisplay();
     void updateCurrentPosition(int msSinceLastUpdate);
 
+    void scrollWheelNudge(float deltaX);
 
     float getViewWidthInSeconds();
     float getCurrentNotePosition();
