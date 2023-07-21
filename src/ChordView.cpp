@@ -211,3 +211,25 @@ bool ChordView::checkForBravura()
 void ChordView::resized()
 {
 }
+
+/**
+ * @brief Handle the mouse wheel event (e.g., a two-finger slide on the mouse pad, etc.)
+ * This sends the delta of the X direction to the chord clipper class. It adjusts the playhead accordingly
+ * 
+ * @param MouseEvent &event 
+ * @param MouseWheelDetails wheel 
+ */
+void ChordView::mouseWheelMove(const MouseEvent &event __attribute__((unused)), const MouseWheelDetails &wheel)
+{
+    // DBG("wheel info: x delta: " + to_string(wheel.deltaX) + "  rev: " + to_string(wheel.isReversed) + " inertia: " + to_string(wheel.isInertial) + " smooth: " + to_string(wheel.isSmooth));
+
+    // The scaling here is purely subjective. It seemed a little twitchy without scaling it down some. Dividing
+    // by 3 seems to produce a balance between ability to move a good distance easily and fine control. I determined 
+    // this with a vast amount of testing (one laptop with one DAW with one mouse and one trackpad ... so, yeah, ymmv)
+    // The negation here is to get it to move in a direction consistent with system settings. The MouseWheelDetails
+    // does have a field indicating if it is reversed. But the deltaX values come in adjusted based on the settings
+    // (e.g., natural scroll on a mac). So JUCE is apparently handling that higher in the stack. So no need to check 
+    // the isReversed here.
+    float deltaX = -(wheel.deltaX / 3.0f);
+    chordClipper.scrollWheelNudge(deltaX);
+}

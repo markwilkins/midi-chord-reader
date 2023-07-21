@@ -52,6 +52,25 @@ void ChordClipper::updateCurrentPosition(int msSinceLastUpdate)
             this->estimatedPlayPosition = this->estimatedPlayPosition + static_cast<float>(msSinceLastUpdate / 1000.0);
         }
     }
+}
+
+/**
+ * @brief Handle a mouse event for moving the window
+ * This accepts a relative offset (a value -1 < x < 1) that is a scaling factor to move the window
+ * It only moves if not currently in playback.
+ * 
+ * @param float deltaX Relative distance to move the view
+ */
+void ChordClipper::scrollWheelNudge(float deltaX) 
+{
+    // Only do the update if not currently playing ... otherwise it is a battle between the person and the computer and
+    // the computer wins and it just messes with the smooth play otherwise
+    if (!midiState.getIsPlaying())
+    {
+        float width = this->getViewWidthInSeconds();
+        float currentPos = this->estimatedPlayPosition;
+        this->estimatedPlayPosition = currentPos + deltaX * width;
+    }
 
 }
 

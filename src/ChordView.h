@@ -37,6 +37,8 @@ public:
 
     void resized() override;
 
+    void mouseWheelMove(const MouseEvent &event, const MouseWheelDetails &wheel) override;
+
 private:
     // flag that indicates if the bravura font available (for flat/sharp symbols)
     bool symbolFontAvailable = false;

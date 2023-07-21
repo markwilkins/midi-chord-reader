@@ -213,3 +213,42 @@ TEST_CASE("measure bars", "chordview")
     expected = addMeasureNumbers(3, {2, 5, 8, 11, 14, 17});
     REQUIRE(bars == expected);
 }
+
+
+TEST_CASE("mouse nudge", "chordview")
+{
+    MidiStore ms;
+    ChordClipper cp(ms);
+    ChordVectorType chords;
+    ChordVectorType expected;
+
+    ms.setTimeWidth(10.0);
+    ms.setPlayHeadPosition(0.0);
+    
+    addNote(ms, 1.0, 1.0, 12);  // C
+    addNote(ms, 13.0, 1.0, 17);  // F
+    ms.setLastEventTimeInSeconds(1.0);
+    
+    chords = cp.getChordsToDisplay();
+    expected = {{1, "C"}};
+    REQUIRE(chords == expected);
+
+    // A nudge while playing should not move it
+    ms.setIsPlaying(true);
+    cp.scrollWheelNudge(0.5);
+    chords = cp.getChordsToDisplay();
+    REQUIRE(chords == expected);
+
+    // If not playing, a nudge of 0.5 should move it half of the width (5 seconds since we set width to 10.0 above)
+    ms.setIsPlaying(false);
+    cp.scrollWheelNudge(0.5);
+    chords = cp.getChordsToDisplay();
+    expected = {{8, "F"}};
+    REQUIRE(chords == expected);
+
+    // negative nudge
+    cp.scrollWheelNudge(-0.5);
+    chords = cp.getChordsToDisplay();
+    expected = {{1, "C"}};
+    REQUIRE(chords == expected);
+}
