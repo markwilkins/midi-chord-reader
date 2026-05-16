@@ -144,10 +144,10 @@ bool MidiChordsAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 
 void MidiChordsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    juce::ignoreUnused(buffer);
     pair<int64, double> posOfBlock = currentPlayheadPosition();
-    AudioPlayHead::CurrentPositionInfo info;
 
-    if (auto positionInfo = getPlayHead()->getPosition()) 
+    if (auto positionInfo = getPlayHead()->getPosition())
     {
         this->midiState.setIsPlaying(positionInfo->getIsPlaying());
 

@@ -2,9 +2,9 @@
  * @file MidiStore.cpp
  * @author Mark Wilkins
  * @brief Part of MidiChords project (plugin to display chord names from a MIDI track on playback)
- * @version 0.8.1
+ * @version 0.9.0
  * 
- * @copyright Copyright (c) 2023
+ * @copyright Copyright (c) 2023-2026
  * 
  */
 
@@ -673,7 +673,7 @@ vector <pair<float, string>> MidiStore::createStaticView()
     // chord set, then lock again and replace the static view?
     const ScopedLock lock(storeLock);
     set<int> notes;
-    double prevTime = 0.0;
+    [[maybe_unused]] double prevTime = 0.0;
     string prevChord = "";
     ChordName cn;
     ChordVectorType newStaticView;

@@ -2,9 +2,9 @@
  * @file ChordView.cpp
  * @author Mark Wilkins
  * @brief Part of MidiChords project (plugin to display chord names from a MIDI track on playback)
- * @version 0.8.1
+ * @version 0.9.0
  * 
- * @copyright Copyright (c) 2023
+ * @copyright Copyright (c) 2023-2026
  * 
  */
 
@@ -45,11 +45,11 @@ void ChordView::paint(juce::Graphics &g)
     this->drawMeasures(bars, g);
 
     // Draw the "now" marker
-    int x = static_cast<int>(getWidth() * chordClipper.getCurrentNotePosition() / chordClipper.getViewWidthInSeconds());
+    int x = static_cast<int>(static_cast<float>(getWidth()) * chordClipper.getCurrentNotePosition() / chordClipper.getViewWidthInSeconds());
     g.setColour(juce::Colours::red);
     // double thickness ... draw it twice. Maybe there is a better way, but this works
-    g.drawVerticalLine(x, 0, getHeight());
-    g.drawVerticalLine(x + 1, 0, getHeight());
+    g.drawVerticalLine(x, 0, static_cast<float>(getHeight()));
+    g.drawVerticalLine(x + 1, 0, static_cast<float>(getHeight()));
 
     g.setColour(juce::Colours::black);
     ChordVectorType chords = chordClipper.getChordsToDisplay();
@@ -72,20 +72,20 @@ void ChordView::drawMeasures(MeasurePositionType bars, juce::Graphics &g)
     optional<int> bpMeasure = midiState.getBPMeasure();
     float beatWidth = 1.0;
     if (bars.size() > 1) 
-        beatWidth = ((bars.begin() + 1)->second - bars.begin()->second) / *bpMeasure;
+        beatWidth = ((bars.begin() + 1)->second - bars.begin()->second) / static_cast<float>(*bpMeasure);
     
 
     textBox.setTop(5);
     float ratio = static_cast<float>(getWidth()) / chordClipper.getViewWidthInSeconds();
     beatWidth *= ratio;
-    g.setFont(15.0);
+    g.setFont(juce::Font(juce::FontOptions{}.withHeight(15.0f)));
     for (MeasurePositionType::iterator it = bars.begin(); it != bars.end(); ++it)
     {
         float xPos = it->second * ratio;
-        g.drawVerticalLine(static_cast<int>(xPos), 0, getHeight());
+        g.drawVerticalLine(static_cast<int>(xPos), 0, static_cast<float>(getHeight()));
         // hash marks for beats in the measure
         for (int i = 1; i < *bpMeasure; i++)
-            g.drawVerticalLine(static_cast<int>(xPos + i * beatWidth), 0, 20);
+            g.drawVerticalLine(static_cast<int>(xPos + static_cast<float>(i) * beatWidth), 0, 20);
 
         // draw in measure number
         textBox.setLeft(xPos + 5);
@@ -97,7 +97,7 @@ void ChordView::drawMeasures(MeasurePositionType bars, juce::Graphics &g)
     {
         float xPos = bars.begin()->second * ratio;
         for (int i = 1; i < *bpMeasure; i++)
-            g.drawVerticalLine(static_cast<int>(xPos - i * beatWidth), 0, 20);
+            g.drawVerticalLine(static_cast<int>(xPos - static_cast<float>(i) * beatWidth), 0, 20);
     }
 
 
@@ -116,15 +116,15 @@ void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g
     auto area = getLocalBounds();
     juce::Rectangle<float> textBox;
     textBox = area.toFloat();
-    int spacer = 2;
+    float spacer = 2.0f;
     float ratio = textBox.getWidth() / chordClipper.getViewWidthInSeconds();
     ChordName cn;
 
     int fontSize = static_cast<int>(midiState.getChordNameSize());
-    g.setFont(fontSize);
+    g.setFont(juce::Font(juce::FontOptions{}.withHeight(static_cast<float>(fontSize))));
     Font defaultFont = g.getCurrentFont();
     defaultFont.setExtraKerningFactor(static_cast<float>(-0.05));
-    Font symbolFont = Font("Bravura Text", fontSize, Font::plain);
+    Font symbolFont(juce::FontOptions{}.withName("Bravura Text").withHeight(static_cast<float>(fontSize)).withStyle("Regular"));
 
     for (auto it = chords.begin(); it != chords.end(); ++it)
     {
@@ -149,13 +149,13 @@ void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g
                     if (sPart != "") {
                         // Draw what we have collected so far
                         g.drawText(sPart, textBox, juce::Justification::centredLeft);
-                        textBox.setX(textBox.getX() + defaultFont.getStringWidthFloat(sPart) + spacer);
+                        textBox.setX(textBox.getX() + juce::GlyphArrangement::getStringWidth(defaultFont, sPart) + spacer);
                         sPart = "";
                     }
                     // switch to the symbol font, draw the symbol and switch back
                     g.setFont(symbolFont);
                     g.drawText(*symbol, textBox, juce::Justification::centredLeft);
-                    textBox.setX(textBox.getX() + symbolFont.getStringWidthFloat(*symbol) + spacer);
+                    textBox.setX(textBox.getX() + juce::GlyphArrangement::getStringWidth(symbolFont, *symbol) + spacer);
                     g.setFont(defaultFont);
                 }
                 else

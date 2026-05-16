@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 
-project(MidiChords VERSION 0.8.1)
+project(MidiChords VERSION 0.9.0)
 
 # Generate the config file that contains the version info
 configure_file(src/MidiChordsConfig.h.in MidiChordsConfig.h)
@@ -18,14 +18,13 @@ include(FetchContent)
 FetchContent_Declare(
         JUCE
         GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-        GIT_TAG 7.0.5
+        GIT_TAG 8.0.12
 )
 FetchContent_MakeAvailable(JUCE)
 
 # If you are building a VST2 or AAX plugin, CMake needs to be told where to find these SDKs on your
 # system. This setup should be done before calling `juce_add_plugin`.
 
-juce_set_vst3_sdk_path("build/_deps/juce-src/modules/juce_audio_processors/format_types/VST3_SDK")
 # juce_set_aax_sdk_path(...)
 
 # `juce_add_plugin` adds a static library target with the name passed as the first argument

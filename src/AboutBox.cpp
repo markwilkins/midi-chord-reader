@@ -2,9 +2,9 @@
  * @file AboutBox.cpp
  * @author Mark Wilkins
  * @brief Part of MidiChords project (plugin to display chord names from a MIDI track on playback)
- * @version 0.8.1
+ * @version 0.9.0
  *
- * @copyright Copyright (c) 2023
+ * @copyright Copyright (c) 2023-2026
  *
  */
 
@@ -19,7 +19,7 @@ AboutBox::AboutBox()
     setSize(400, 200);
     addAndMakeVisible(title);
     title.setText("MidiChords", juce::dontSendNotification);
-    title.setFont(juce::Font(16.0f, juce::Font::bold));
+    title.setFont(juce::Font(juce::FontOptions{}.withHeight(16.0f).withStyle("Bold")));
     title.setJustificationType(juce::Justification::centred);
 
     string s = "version: " + to_string(MidiChords_VERSION_MAJOR);
@@ -32,7 +32,7 @@ AboutBox::AboutBox()
 
     addAndMakeVisible(myOwnName);
 
-    myOwnName.setText(String(CharPointer_UTF8("Copyright \xc2\xa9 2023, Mark Wilkins")), juce::dontSendNotification);
+    myOwnName.setText(String(CharPointer_UTF8("Copyright \xc2\xa9 2023-2026, Mark Wilkins")), juce::dontSendNotification);
     myOwnName.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(myGitLink);
     myGitLink.setButtonText("https://github.com/markwilkins/midi-chord-reader");
