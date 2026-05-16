@@ -4,7 +4,7 @@
  * @brief Part of MidiChords project (plugin to display chord names from a MIDI track on playback)
  * @version 0.9.0
  *
- * @copyright Copyright (c) 2023
+ * @copyright Copyright (c) 2023-2026
  *
  */
 
