@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 
 project(MidiChords VERSION 0.8.1)
 
@@ -18,7 +18,7 @@ include(FetchContent)
 FetchContent_Declare(
         JUCE
         GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-        GIT_TAG 7.0.5
+        GIT_TAG 8.0.12
 )
 FetchContent_MakeAvailable(JUCE)
 
