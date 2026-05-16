@@ -19,7 +19,7 @@ AboutBox::AboutBox()
     setSize(400, 200);
     addAndMakeVisible(title);
     title.setText("MidiChords", juce::dontSendNotification);
-    title.setFont(juce::Font(16.0f, juce::Font::bold));
+    title.setFont(juce::Font(juce::FontOptions{}.withHeight(16.0f).withStyle("Bold")));
     title.setJustificationType(juce::Justification::centred);
 
     string s = "version: " + to_string(MidiChords_VERSION_MAJOR);
