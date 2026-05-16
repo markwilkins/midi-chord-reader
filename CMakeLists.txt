@@ -25,7 +25,6 @@ FetchContent_MakeAvailable(JUCE)
 # If you are building a VST2 or AAX plugin, CMake needs to be told where to find these SDKs on your
 # system. This setup should be done before calling `juce_add_plugin`.
 
-juce_set_vst3_sdk_path("build/_deps/juce-src/modules/juce_audio_processors/format_types/VST3_SDK")
 # juce_set_aax_sdk_path(...)
 
 # `juce_add_plugin` adds a static library target with the name passed as the first argument
