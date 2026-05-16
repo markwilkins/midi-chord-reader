@@ -673,7 +673,7 @@ vector <pair<float, string>> MidiStore::createStaticView()
     // chord set, then lock again and replace the static view?
     const ScopedLock lock(storeLock);
     set<int> notes;
-    double prevTime = 0.0;
+    [[maybe_unused]] double prevTime = 0.0;
     string prevChord = "";
     ChordName cn;
     ChordVectorType newStaticView;

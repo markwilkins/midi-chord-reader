@@ -45,11 +45,11 @@ void ChordView::paint(juce::Graphics &g)
     this->drawMeasures(bars, g);
 
     // Draw the "now" marker
-    int x = static_cast<int>(getWidth() * chordClipper.getCurrentNotePosition() / chordClipper.getViewWidthInSeconds());
+    int x = static_cast<int>(static_cast<float>(getWidth()) * chordClipper.getCurrentNotePosition() / chordClipper.getViewWidthInSeconds());
     g.setColour(juce::Colours::red);
     // double thickness ... draw it twice. Maybe there is a better way, but this works
-    g.drawVerticalLine(x, 0, getHeight());
-    g.drawVerticalLine(x + 1, 0, getHeight());
+    g.drawVerticalLine(x, 0, static_cast<float>(getHeight()));
+    g.drawVerticalLine(x + 1, 0, static_cast<float>(getHeight()));
 
     g.setColour(juce::Colours::black);
     ChordVectorType chords = chordClipper.getChordsToDisplay();
@@ -72,7 +72,7 @@ void ChordView::drawMeasures(MeasurePositionType bars, juce::Graphics &g)
     optional<int> bpMeasure = midiState.getBPMeasure();
     float beatWidth = 1.0;
     if (bars.size() > 1) 
-        beatWidth = ((bars.begin() + 1)->second - bars.begin()->second) / *bpMeasure;
+        beatWidth = ((bars.begin() + 1)->second - bars.begin()->second) / static_cast<float>(*bpMeasure);
     
 
     textBox.setTop(5);
@@ -82,10 +82,10 @@ void ChordView::drawMeasures(MeasurePositionType bars, juce::Graphics &g)
     for (MeasurePositionType::iterator it = bars.begin(); it != bars.end(); ++it)
     {
         float xPos = it->second * ratio;
-        g.drawVerticalLine(static_cast<int>(xPos), 0, getHeight());
+        g.drawVerticalLine(static_cast<int>(xPos), 0, static_cast<float>(getHeight()));
         // hash marks for beats in the measure
         for (int i = 1; i < *bpMeasure; i++)
-            g.drawVerticalLine(static_cast<int>(xPos + i * beatWidth), 0, 20);
+            g.drawVerticalLine(static_cast<int>(xPos + static_cast<float>(i) * beatWidth), 0, 20);
 
         // draw in measure number
         textBox.setLeft(xPos + 5);
@@ -97,7 +97,7 @@ void ChordView::drawMeasures(MeasurePositionType bars, juce::Graphics &g)
     {
         float xPos = bars.begin()->second * ratio;
         for (int i = 1; i < *bpMeasure; i++)
-            g.drawVerticalLine(static_cast<int>(xPos - i * beatWidth), 0, 20);
+            g.drawVerticalLine(static_cast<int>(xPos - static_cast<float>(i) * beatWidth), 0, 20);
     }
 
 
@@ -116,7 +116,7 @@ void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g
     auto area = getLocalBounds();
     juce::Rectangle<float> textBox;
     textBox = area.toFloat();
-    int spacer = 2;
+    float spacer = 2.0f;
     float ratio = textBox.getWidth() / chordClipper.getViewWidthInSeconds();
     ChordName cn;
 
