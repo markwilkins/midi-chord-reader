@@ -78,7 +78,7 @@ void ChordView::drawMeasures(MeasurePositionType bars, juce::Graphics &g)
     textBox.setTop(5);
     float ratio = static_cast<float>(getWidth()) / chordClipper.getViewWidthInSeconds();
     beatWidth *= ratio;
-    g.setFont(15.0);
+    g.setFont(juce::Font(juce::FontOptions{}.withHeight(15.0f)));
     for (MeasurePositionType::iterator it = bars.begin(); it != bars.end(); ++it)
     {
         float xPos = it->second * ratio;
@@ -121,10 +121,10 @@ void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g
     ChordName cn;
 
     int fontSize = static_cast<int>(midiState.getChordNameSize());
-    g.setFont(fontSize);
+    g.setFont(juce::Font(juce::FontOptions{}.withHeight(static_cast<float>(fontSize))));
     Font defaultFont = g.getCurrentFont();
     defaultFont.setExtraKerningFactor(static_cast<float>(-0.05));
-    Font symbolFont = Font("Bravura Text", fontSize, Font::plain);
+    Font symbolFont(juce::FontOptions{}.withName("Bravura Text").withHeight(static_cast<float>(fontSize)).withStyle("Regular"));
 
     for (auto it = chords.begin(); it != chords.end(); ++it)
     {
@@ -149,13 +149,13 @@ void ChordView::drawChords(vector<pair<float, string>> chords, juce::Graphics &g
                     if (sPart != "") {
                         // Draw what we have collected so far
                         g.drawText(sPart, textBox, juce::Justification::centredLeft);
-                        textBox.setX(textBox.getX() + defaultFont.getStringWidthFloat(sPart) + spacer);
+                        textBox.setX(textBox.getX() + juce::GlyphArrangement::getStringWidth(defaultFont, sPart) + spacer);
                         sPart = "";
                     }
                     // switch to the symbol font, draw the symbol and switch back
                     g.setFont(symbolFont);
                     g.drawText(*symbol, textBox, juce::Justification::centredLeft);
-                    textBox.setX(textBox.getX() + symbolFont.getStringWidthFloat(*symbol) + spacer);
+                    textBox.setX(textBox.getX() + juce::GlyphArrangement::getStringWidth(symbolFont, *symbol) + spacer);
                     g.setFont(defaultFont);
                 }
                 else
